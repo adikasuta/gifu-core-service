@@ -1,8 +1,6 @@
 package com.gifu.coreservice.filter;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -64,13 +62,13 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
 
-    @Bean
-    public FilterRegistrationBean jwtAuthFilter() {
-        FilterRegistrationBean filterRegBean = new FilterRegistrationBean();
-        filterRegBean.setFilter(new JwtFilter());
-        filterRegBean.setEnabled(Boolean.TRUE);
-        filterRegBean.setName("staticKeyFilter");
-        filterRegBean.setOrder(1);
-        return filterRegBean;
-    }
+//    @Bean
+//    public FilterRegistrationBean jwtAuthFilter() {
+//        FilterRegistrationBean filterRegBean = new FilterRegistrationBean();
+//        filterRegBean.setFilter(new JwtFilter(jwtAuthorizationService));
+//        filterRegBean.setEnabled(Boolean.TRUE);
+//        filterRegBean.setName("staticKeyFilter");
+//        filterRegBean.setOrder(1);
+//        return filterRegBean;
+//    }
 }

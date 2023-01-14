@@ -1,0 +1,7 @@
+{
+	"auths": {
+		"registry.achilles.systems": {
+			"auth": "DOCKER_AUTH"
+		}
+	}
+}
