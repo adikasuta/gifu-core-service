@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.8.xsd">
+
+    <changeSet  author="suta"  id="202301192253">
+        <createTable tableName="workflow">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workflow_code" type="VARCHAR(50)"/>
+            <column name="name" type="VARCHAR(100)" />
+            <column name="is_deleted" type="BOOLEAN" />
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="step">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workflow_id" type="bigint"/>
+            <column name="name" type="VARCHAR(100)" />
+            <column name="user_role_code" type="VARCHAR(50)" />
+            <column name="should_notify" type="BOOLEAN" />
+            <column name="next_step_id" type="bigint"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="workflow_id"
+                                 baseTableName="step"
+                                 constraintName="fk_step_workflow_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="workflow"/>
+
+        <createTable tableName="status">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="step_id" type="bigint"/>
+            <column name="next_status_id" type="bigint"/>
+            <column name="name" type="VARCHAR(100)" />
+            <column name="permission_code" type="VARCHAR(50)" />
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="step_id"
+                                 baseTableName="status"
+                                 constraintName="fk_status_step_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="step"/>
+
+        <createTable tableName="ref_status_pattern">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="pattern_code" type="VARCHAR(50)"/>
+            <column name="name" type="VARCHAR(100)" />
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="ref_status">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="status_pattern_code" type="VARCHAR(50)"/>
+            <column name="name" type="VARCHAR(100)" />
+            <column name="next_status_id" type="bigint"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="status_pattern_code"
+                                 baseTableName="ref_status"
+                                 constraintName="fk_ref_status_status_pattern_code"
+                                 referencedColumnNames="pattern_code"
+                                 referencedTableName="ref_status_pattern"/>
+
+
+        <createTable tableName="timeline">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="bigint"/>
+            <column name="workflow_id" type="bigint"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="timeline_step">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="timeline_id" type="bigint"/>
+            <column name="assignee_user_id" type="bigint"/>
+            <column name="step_id" type="bigint"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="timeline_step_status">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="step_timeline_detail_id" type="bigint"/>
+            <column name="status_id" type="bigint"/>
+            <column name="created_by_user_id" type="bigint"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+    </changeSet>
+
+</databaseChangeLog>

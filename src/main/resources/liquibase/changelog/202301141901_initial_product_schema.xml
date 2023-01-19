@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.8.xsd">
+
+    <changeSet  author="suta"  id="202301141901">
+        <createTable tableName="variant_type">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="variant_type_name" type="VARCHAR(50)"/>
+            <column name="variant_type_code" type="VARCHAR(50)" />
+            <column name="is_can_be_paired" type="BOOLEAN" />
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="product_category">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)"/>
+            <column name="product_category_code" type="VARCHAR(50)"/>
+            <column name="workflow_code" type="VARCHAR(50)"/>
+            <column name="picture" type="VARCHAR(255)" />
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="product">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_code" type="VARCHAR(50)"/>
+            <column name="product_category_code" type="VARCHAR(50)"/>
+            <column name="product_type" type="VARCHAR(50)"/>
+            <column name="name" type="VARCHAR(50)"/>
+            <column name="picture" type="VARCHAR(255)" />
+            <column name="price" type="decimal(19,2)"/>
+            <column name="length" type="float"/>
+            <column name="width" type="float"/>
+            <column name="height" type="float"/>
+            <column name="weight" type="float"/>
+            <column name="min_order" type="int"/>
+            <column name="description" type="TEXT" />
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="product_category_code"
+                                 baseTableName="product"
+                                 constraintName="fk_product_product_category_code"
+                                 referencedColumnNames="product_category_code"
+                                 referencedTableName="product_category"/>
+
+        <createTable tableName="product_variant">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_code" type="VARCHAR(50)"/>
+            <column name="variant_code" type="VARCHAR(50)"/>
+            <column name="pair_variant_code" type="VARCHAR(50)"/>
+            <column name="greetings_variant_code" type="VARCHAR(50)"/>
+            <column name="price" type="decimal(19,2)"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="product_code"
+                                 baseTableName="product_variant"
+                                 constraintName="fk_product_variant_product_code"
+                                 referencedColumnNames="product_code"
+                                 referencedTableName="product"/>
+        <addForeignKeyConstraint baseColumnNames="variant_code"
+                                 baseTableName="product_variant"
+                                 constraintName="fk_product_variant_variant_code"
+                                 referencedColumnNames="variant_code"
+                                 referencedTableName="variant"/>
+
+        <createTable tableName="variant">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="variant_code" type="VARCHAR(50)"/>
+            <column name="variant_type_code" type="VARCHAR(50)"/>
+            <column name="name" type="VARCHAR(100)"/>
+            <column name="picture" type="VARCHAR(255)"/>
+            <column name="allowed_be_secondary" type="BOOLEAN"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="content">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="variant_code" type="VARCHAR(50)"/>
+            <column name="name" type="VARCHAR(100)"/>
+            <column name="picture" type="VARCHAR(255)"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="variant_code"
+                                 baseTableName="content"
+                                 constraintName="fk_content_variant_code"
+                                 referencedColumnNames="variant_code"
+                                 referencedTableName="variant"/>
+
+        <createTable tableName="pricing_range">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_code" type="VARCHAR(50)"/>
+            <column name="qty_min" type="int"/>
+            <column name="qty_max" type="int"/>
+            <column name="price" type="decimal(19,2)"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="product_code"
+                                 baseTableName="pricing_range"
+                                 constraintName="fk_pricing_range_product_code"
+                                 referencedColumnNames="product_code"
+                                 referencedTableName="product"/>
+
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.8.xsd">
+
+    <changeSet  author="suta"  id="202301141825">
+        <createTable tableName="province">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(50)"/>
+            <column name="province_name" type="VARCHAR(100)" />
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="city">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="province_code" type="VARCHAR(50)"/>
+            <column name="code" type="VARCHAR(50)" />
+            <column name="city_name" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="province_code"
+                                 baseTableName="city"
+                                 constraintName="fk_city_province_code"
+                                 referencedColumnNames="code"
+                                 referencedTableName="province"/>
+
+        <createTable tableName="district">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="city_code" type="VARCHAR(50)"/>
+            <column name="code" type="VARCHAR(50)" />
+            <column name="district_name" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="city_code"
+                                 baseTableName="district"
+                                 constraintName="fk_district_city_code"
+                                 referencedColumnNames="code"
+                                 referencedTableName="city"/>
+
+        <createTable tableName="kelurahan">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="district_code" type="VARCHAR(50)"/>
+            <column name="code" type="VARCHAR(50)" />
+            <column name="kelurahan_name" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="district_code"
+                                 baseTableName="kelurahan"
+                                 constraintName="fk_kelurahan_district_code"
+                                 referencedColumnNames="code"
+                                 referencedTableName="district"/>
+
+
+        <createTable tableName="shipping_vendor">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="vendor_name" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

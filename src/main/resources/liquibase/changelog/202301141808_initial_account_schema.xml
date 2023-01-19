@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.8.xsd">
+
+    <changeSet  author="suta"  id="202301141808">
+        <createTable tableName="user">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)"/>
+            <column name="email" type="VARCHAR(100)" />
+            <column name="password" type="VARCHAR(255)" />
+            <column name="role_id" type="bigint" />
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="cs_referral">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint"/>
+            <column name="token" type="VARCHAR(255)" />
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="user_id"
+                                 baseTableName="cs_referral"
+                                 constraintName="fk_cs_referral_user_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="user"/>
+
+        <createTable tableName="user_permission">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint"/>
+            <column name="permission_id" type="bigint" />
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="user_id"
+                                 baseTableName="user_permission"
+                                 constraintName="fk_user_permission_user_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="user"/>
+        <addForeignKeyConstraint baseColumnNames="permission_id"
+                                 baseTableName="user_permission"
+                                 constraintName="fk_user_permission_permission_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="permission"/>
+
+        <createTable tableName="role">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(50)"/>
+            <column name="code" type="VARCHAR(50)" />
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="role_permission">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="role_id" type="bigint"/>
+            <column name="permission_id" type="bigint" />
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="role_id"
+                                 baseTableName="role_permission"
+                                 constraintName="fk_role_permission_role_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="role"/>
+        <addForeignKeyConstraint baseColumnNames="permission_id"
+                                 baseTableName="role_permission"
+                                 constraintName="fk_role_permission_permission_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="permission"/>
+
+        <createTable tableName="permission">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)"/>
+            <column name="code" type="VARCHAR(100)" />
+            <column name="remarks" type="VARCHAR(255)" />
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="customer">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(50)" />
+            <column name="address" type="VARCHAR(255)" />
+            <column name="email" type="VARCHAR(100)"/>
+            <column name="password" type="VARCHAR(255)" />
+            <column name="phone_number" type="VARCHAR(50)" />
+            <column name="birth_date" type="DATE"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

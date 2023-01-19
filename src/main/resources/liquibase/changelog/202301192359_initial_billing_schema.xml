@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.8.xsd">
+
+    <changeSet  author="suta"  id="202301192253">
+        <createTable tableName="va_bill">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="va_number" type="VARCHAR(50)"/>
+            <column name="amount" type="decimal(19,2)"/>
+            <column name="customer_email" type="VARCHAR(100)"/>
+            <column name="bank_name" type="VARCHAR(50)"/>
+            <column name="remarks" type="VARCHAR(100)"/>
+            <column name="active_date" type="TIMESTAMP"/>
+            <column name="expiry_date" type="TIMESTAMP"/>
+            <column name="payment_date" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="order_bill">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="bigint"/>
+            <column name="va_bill_id" type="bigint"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+    </changeSet>
+
+</databaseChangeLog>
