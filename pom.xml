@@ -98,18 +98,13 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.cybersource</groupId>
-      <artifactId>cybersource-rest-client-java</artifactId>
-      <version>0.0.46</version>
-    </dependency>
-    <dependency>
       <groupId>io.projectreactor.netty</groupId>
       <artifactId>reactor-netty</artifactId>
     </dependency>
   </dependencies>
 
   <build>
-    <finalName>cybersource-middleware</finalName>
+    <finalName>gifu-core-service</finalName>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

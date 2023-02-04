@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.8.xsd">
+
+    <changeSet  author="suta"  id="202302022233">
+        <createTable tableName="historical_order_status">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="bigint"/>
+            <column name="status" type="VARCHAR(50)"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="order_variant">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="bigint"/>
+            <column name="variant_type_code" type="VARCHAR(50)"/>
+            <column name="variant_code" type="VARCHAR(50)"/>
+            <column name="variant_name" type="VARCHAR(100)"/>
+            <column name="price" type="decimal(19,2)"/>
+            <column name="variant_content_code" type="VARCHAR(50)"/>
+            <column name="variant_content_name" type="VARCHAR(100)"/>
+            <column name="variant_content_picture" type="VARCHAR(255)"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="order_variant_info">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="bigint"/>
+            <column name="order_variant_id" type="bigint"/>
+            <column name="key" type="VARCHAR(50)"/>
+            <column name="value" type="VARCHAR(100)"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="order_event_detail">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="bigint"/>
+            <column name="name" type="VARCHAR(100)"/>
+            <column name="venue" type="VARCHAR(100)"/>
+            <column name="date" type="TIMESTAMP"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="order_bride_groom">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="bigint"/>
+            <column name="bride_name" type="VARCHAR(100)"/>
+            <column name="bride_nickname" type="VARCHAR(100)"/>
+            <column name="bride_father" type="VARCHAR(100)"/>
+            <column name="bride_mother" type="VARCHAR(100)"/>
+            <column name="bride_instagram" type="VARCHAR(100)"/>
+            <column name="groom_name" type="VARCHAR(100)"/>
+            <column name="groom_nickname" type="VARCHAR(100)"/>
+            <column name="groom_father" type="VARCHAR(100)"/>
+            <column name="groom_mother" type="VARCHAR(100)"/>
+            <column name="groom_instagram" type="VARCHAR(100)"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="order_shipping">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="bigint"/>
+            <column name="province_code" type="VARCHAR(50)"/>
+            <column name="city_code" type="VARCHAR(50)"/>
+            <column name="district_code" type="VARCHAR(50)"/>
+            <column name="kelurahan_code" type="VARCHAR(50)"/>
+            <column name="address" type="VARCHAR(255)"/>
+            <column name="preferred_shipping_vendor" type="bigint"/>
+            <column name="use_wooden_crate" type="boolean"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="order_additional_info">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="bigint"/>
+            <column name="key" type="VARCHAR(50)"/>
+            <column name="value" type="VARCHAR(100)"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="order">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_code" type="VARCHAR(50)"/>
+            <column name="product_code" type="VARCHAR(50)"/>
+            <column name="product_type" type="VARCHAR(50)"/>
+            <column name="status" type="VARCHAR(50)"/>
+            <column name="customer_id" type="bigint"/>
+            <column name="customer_email" type="VARCHAR(100)"/>
+            <column name="customer_phone_no" type="VARCHAR(50)"/>
+
+            <column name="order_shipping_id" type="bigint"/>
+            <column name="order_bride_groom_id" type="bigint"/>
+
+            <column name="quantity" type="int"/>
+            <column name="sub_total" type="decimal(19,2)"/>
+            <column name="shipping_fee" type="decimal(19,2)"/>
+            <column name="charge_fee" type="decimal(19,2)"/>
+            <column name="cashback" type="decimal(19,2)"/>
+            <column name="discount" type="decimal(19,2)"/>
+            <column name="grand_total" type="decimal(19,2)"/>
+            <column name="notes" type="TEXT"/>
+            <column name="cs_referral_token" type="VARCHAR(255)"/>
+
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
+        </createTable>
+
+    </changeSet>
+
+</databaseChangeLog>

@@ -12,8 +12,8 @@
             </column>
             <column name="code" type="VARCHAR(50)"/>
             <column name="province_name" type="VARCHAR(100)" />
-            <column name="created_at" type="TIMESTAMP"/>
-            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
 
         <createTable tableName="city">
@@ -23,8 +23,8 @@
             <column name="province_code" type="VARCHAR(50)"/>
             <column name="code" type="VARCHAR(50)" />
             <column name="city_name" type="VARCHAR(100)"/>
-            <column name="created_at" type="TIMESTAMP"/>
-            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="province_code"
                                  baseTableName="city"
@@ -39,8 +39,8 @@
             <column name="city_code" type="VARCHAR(50)"/>
             <column name="code" type="VARCHAR(50)" />
             <column name="district_name" type="VARCHAR(100)"/>
-            <column name="created_at" type="TIMESTAMP"/>
-            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="city_code"
                                  baseTableName="district"
@@ -55,8 +55,8 @@
             <column name="district_code" type="VARCHAR(50)"/>
             <column name="code" type="VARCHAR(50)" />
             <column name="kelurahan_name" type="VARCHAR(100)"/>
-            <column name="created_at" type="TIMESTAMP"/>
-            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="district_code"
                                  baseTableName="kelurahan"
@@ -70,8 +70,8 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="vendor_name" type="VARCHAR(100)"/>
-            <column name="created_at" type="TIMESTAMP"/>
-            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
     </changeSet>
 

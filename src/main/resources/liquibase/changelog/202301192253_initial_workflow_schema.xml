@@ -13,8 +13,8 @@
             <column name="workflow_code" type="VARCHAR(50)"/>
             <column name="name" type="VARCHAR(100)" />
             <column name="is_deleted" type="BOOLEAN" />
-            <column name="created_at" type="TIMESTAMP"/>
-            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
 
         <createTable tableName="step">
@@ -26,8 +26,8 @@
             <column name="user_role_code" type="VARCHAR(50)" />
             <column name="should_notify" type="BOOLEAN" />
             <column name="next_step_id" type="bigint"/>
-            <column name="created_at" type="TIMESTAMP"/>
-            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="workflow_id"
                                  baseTableName="step"
@@ -43,8 +43,8 @@
             <column name="next_status_id" type="bigint"/>
             <column name="name" type="VARCHAR(100)" />
             <column name="permission_code" type="VARCHAR(50)" />
-            <column name="created_at" type="TIMESTAMP"/>
-            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="step_id"
                                  baseTableName="status"
@@ -58,8 +58,8 @@
             </column>
             <column name="pattern_code" type="VARCHAR(50)"/>
             <column name="name" type="VARCHAR(100)" />
-            <column name="created_at" type="TIMESTAMP"/>
-            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
 
         <createTable tableName="ref_status">
@@ -69,8 +69,8 @@
             <column name="status_pattern_code" type="VARCHAR(50)"/>
             <column name="name" type="VARCHAR(100)" />
             <column name="next_status_id" type="bigint"/>
-            <column name="created_at" type="TIMESTAMP"/>
-            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="status_pattern_code"
                                  baseTableName="ref_status"
@@ -85,8 +85,8 @@
             </column>
             <column name="order_id" type="bigint"/>
             <column name="workflow_id" type="bigint"/>
-            <column name="created_at" type="TIMESTAMP"/>
-            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
 
         <createTable tableName="timeline_step">
@@ -96,8 +96,8 @@
             <column name="timeline_id" type="bigint"/>
             <column name="assignee_user_id" type="bigint"/>
             <column name="step_id" type="bigint"/>
-            <column name="created_at" type="TIMESTAMP"/>
-            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
 
         <createTable tableName="timeline_step_status">
@@ -107,8 +107,8 @@
             <column name="step_timeline_detail_id" type="bigint"/>
             <column name="status_id" type="bigint"/>
             <column name="created_by_user_id" type="bigint"/>
-            <column name="created_at" type="TIMESTAMP"/>
-            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
 
     </changeSet>

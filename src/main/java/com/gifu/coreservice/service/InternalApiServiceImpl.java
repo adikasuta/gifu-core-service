@@ -15,9 +15,7 @@ public class InternalApiServiceImpl implements InternalApiService {
 
     @Autowired
     private RestTemplate restTemplate;
-    @Value("${internalapi.apiKey}")
     private String apiKey;
-    @Value("${internalapi.baseUrl}")
     private String baseUrl;
 
     private static final String API_KEY = "x-api-key";
