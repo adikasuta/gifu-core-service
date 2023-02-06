@@ -42,8 +42,7 @@ public class Product {
     @Column(name = "description")
     private String description;
 
-    @OneToMany()
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "product_code")
     private Set<PricingRange> pricingRanges;
 

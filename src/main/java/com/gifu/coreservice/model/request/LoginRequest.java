@@ -1,4 +1,4 @@
-package com.gifu.coreservice.model.response;
+package com.gifu.coreservice.model.request;
 
 import lombok.Data;
 

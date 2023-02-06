@@ -1,6 +1,7 @@
 package com.gifu.coreservice.filter;
 
 import com.gifu.coreservice.entity.User;
+import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.repository.UserRepository;
 import com.gifu.coreservice.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
@@ -11,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
@@ -26,8 +28,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+
+import static java.lang.String.format;
 
 @Configuration
 @Slf4j
@@ -39,10 +41,11 @@ public class JwtFilter extends OncePerRequestFilter {
     private final Collection<String> excludeUrlPatterns = new ArrayList<>();
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-    public JwtFilter(UserRepository userRepo){
+    public JwtFilter(UserRepository userRepo) {
         this.userRepo = userRepo;
         this.excludeUrlPatterns.add("/api/public/**");
-        this.excludeUrlPatterns.add("/api/auth/**");
+        this.excludeUrlPatterns.add("/api/auth/login");
+        this.excludeUrlPatterns.add("/api/auth/logout");
     }
 
     @Override
@@ -68,14 +71,15 @@ public class JwtFilter extends OncePerRequestFilter {
         try {
             Jws<Claims> claimsJws = JwtUtils.parseJwt(token);
             // Get user identity and set it on the spring security context
-            Optional<User> userDetails = userRepo
-                    .findByEmail(claimsJws.getBody().get("email", String.class));
+            User userDetails = userRepo
+                    .findByEmail(claimsJws.getBody().get("email", String.class)).orElseThrow(
+                            () -> new UsernameNotFoundException("User is not found")
+                    );
 
             UsernamePasswordAuthenticationToken
                     authentication = new UsernamePasswordAuthenticationToken(
                     userDetails, null,
-                    userDetails.isEmpty() ?
-                            List.of() : userDetails.get().getAuthorities()
+                    userDetails.getAuthorities()
             );
 
             authentication.setDetails(
@@ -84,7 +88,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             chain.doFilter(request, response);
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException | URISyntaxException e) {
+        } catch (Exception e) {
             chain.doFilter(request, response);
         }
 
