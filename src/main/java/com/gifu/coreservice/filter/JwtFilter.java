@@ -1,8 +1,19 @@
 package com.gifu.coreservice.filter;
 
+import com.gifu.coreservice.entity.User;
+import com.gifu.coreservice.repository.UserRepository;
+import com.gifu.coreservice.utils.JwtUtils;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.AntPathMatcher;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -10,49 +21,28 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.HttpCookie;
+import java.net.URISyntaxException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Configuration
 @Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
+    @Autowired
+    private UserRepository userRepo;
+
     private final Collection<String> excludeUrlPatterns = new ArrayList<>();
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-    private static final String BEARER = "BEARER";
-
-    public JwtFilter() {
-        this.excludeUrlPatterns.add("/swagger-ui/**");
-        this.excludeUrlPatterns.add("/health");
-        this.excludeUrlPatterns.add("/internal/api/v1/**");
-    }
-
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException {
-        try {
-            log.info("Calling: " + request.getRequestURL());
-            String cookie = request.getHeader("cookie");
-            List<HttpCookie> parsed = HttpCookie.parse(cookie);
-            String bearer = getBearer(parsed);
-//            jwtAuthorizationService.validateJwt(bearer);
-            filterChain.doFilter(request, response);
-        } catch (Exception e) {
-            log.error("JWT AUTH FAILED " + e.getMessage(), e);
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
-        }
-
-    }
-
-    private String getBearer(List<HttpCookie> cookies) {
-        for (HttpCookie it : cookies) {
-            if (BEARER.equals(it.getName())) {
-                return it.getValue();
-            }
-        }
-        return null;
+    public JwtFilter(UserRepository userRepo){
+        this.userRepo = userRepo;
+        this.excludeUrlPatterns.add("/api/public/**");
+        this.excludeUrlPatterns.add("/api/auth/**");
     }
 
     @Override
@@ -61,14 +51,43 @@ public class JwtFilter extends OncePerRequestFilter {
                 .anyMatch(p -> pathMatcher.match(p, request.getRequestURI()));
     }
 
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain chain)
+            throws ServletException, IOException {
+        // Get authorization header and validate
+        final String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (!StringUtils.hasText(header) || !header.startsWith("Bearer ")) {
+            chain.doFilter(request, response);
+            return;
+        }
 
-//    @Bean
-//    public FilterRegistrationBean jwtAuthFilter() {
-//        FilterRegistrationBean filterRegBean = new FilterRegistrationBean();
-//        filterRegBean.setFilter(new JwtFilter(jwtAuthorizationService));
-//        filterRegBean.setEnabled(Boolean.TRUE);
-//        filterRegBean.setName("staticKeyFilter");
-//        filterRegBean.setOrder(1);
-//        return filterRegBean;
-//    }
+        // Get jwt token and validate
+        final String token = header.split(" ")[1].trim();
+        try {
+            Jws<Claims> claimsJws = JwtUtils.parseJwt(token);
+            // Get user identity and set it on the spring security context
+            Optional<User> userDetails = userRepo
+                    .findByEmail(claimsJws.getBody().get("email", String.class));
+
+            UsernamePasswordAuthenticationToken
+                    authentication = new UsernamePasswordAuthenticationToken(
+                    userDetails, null,
+                    userDetails.isEmpty() ?
+                            List.of() : userDetails.get().getAuthorities()
+            );
+
+            authentication.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request)
+            );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            chain.doFilter(request, response);
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException | URISyntaxException e) {
+            chain.doFilter(request, response);
+        }
+
+
+    }
 }

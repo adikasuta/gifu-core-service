@@ -10,7 +10,9 @@
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="workflow_code" type="VARCHAR(50)"/>
+            <column name="workflow_code" type="VARCHAR(50)">
+                <constraints unique="true" nullable="false"/>
+            </column>
             <column name="name" type="VARCHAR(100)" />
             <column name="is_deleted" type="BOOLEAN" />
             <column name="created_date" type="TIMESTAMP"/>
@@ -56,7 +58,9 @@
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="pattern_code" type="VARCHAR(50)"/>
+            <column name="pattern_code" type="VARCHAR(50)">
+                <constraints unique="true" nullable="false"/>
+            </column>
             <column name="name" type="VARCHAR(100)" />
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>

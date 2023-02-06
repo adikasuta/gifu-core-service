@@ -10,7 +10,9 @@
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="variant_code" type="VARCHAR(50)"/>
+            <column name="variant_code" type="VARCHAR(50)">
+                <constraints unique="true" nullable="false"/>
+            </column>
             <column name="variant_type_code" type="VARCHAR(50)"/>
             <column name="name" type="VARCHAR(100)"/>
             <column name="picture" type="VARCHAR(255)"/>
@@ -24,7 +26,9 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="variant_type_name" type="VARCHAR(50)"/>
-            <column name="variant_type_code" type="VARCHAR(50)" />
+            <column name="variant_type_code" type="VARCHAR(50)" >
+                <constraints unique="true" nullable="false"/>
+            </column>
             <column name="is_can_be_paired" type="BOOLEAN" />
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
@@ -35,7 +39,9 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="name" type="VARCHAR(100)"/>
-            <column name="product_category_code" type="VARCHAR(50)"/>
+            <column name="product_category_code" type="VARCHAR(50)">
+                <constraints unique="true" nullable="false"/>
+            </column>
             <column name="workflow_code" type="VARCHAR(50)"/>
             <column name="picture" type="VARCHAR(255)" />
             <column name="created_date" type="TIMESTAMP"/>
@@ -46,7 +52,9 @@
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="product_code" type="VARCHAR(50)"/>
+            <column name="product_code" type="VARCHAR(50)">
+                <constraints unique="true" nullable="false"/>
+            </column>
             <column name="product_category_code" type="VARCHAR(50)"/>
             <column name="product_type" type="VARCHAR(50)"/>
             <column name="name" type="VARCHAR(50)"/>

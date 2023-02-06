@@ -24,8 +24,11 @@ public class Role {
     @Column(name = "updated_date")
     private ZonedDateTime updatedDate;
 
-    @OneToMany(mappedBy = "roles")
-    @JsonIgnore
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @ManyToMany(cascade = {CascadeType.ALL})
+    @JoinTable(
+            name = "role_permission",
+            inverseJoinColumns = {@JoinColumn(name = "permission_id")},
+            joinColumns = {@JoinColumn(name = "role_id")}
+    )
     private Set<Permission> permissions;
 }
