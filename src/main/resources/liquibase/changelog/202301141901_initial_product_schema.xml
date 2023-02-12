@@ -44,6 +44,9 @@
             </column>
             <column name="workflow_code" type="VARCHAR(50)"/>
             <column name="picture" type="VARCHAR(255)" />
+            <column name="product_type" type="VARCHAR(50)"/>
+            <column name="design_estimation" type="int"/>
+            <column name="production_estimation" type="int"/>
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
@@ -55,7 +58,7 @@
             <column name="product_code" type="VARCHAR(50)">
                 <constraints unique="true" nullable="false"/>
             </column>
-            <column name="product_category_code" type="VARCHAR(50)"/>
+            <column name="product_category_id" type="bigint"/>
             <column name="product_type" type="VARCHAR(50)"/>
             <column name="name" type="VARCHAR(50)"/>
             <column name="picture" type="VARCHAR(255)" />
@@ -69,67 +72,67 @@
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="product_category_code"
+        <addForeignKeyConstraint baseColumnNames="product_category_id"
                                  baseTableName="product"
-                                 constraintName="fk_product_product_category_code"
-                                 referencedColumnNames="product_category_code"
+                                 constraintName="fk_product_product_category_id"
+                                 referencedColumnNames="id"
                                  referencedTableName="product_category"/>
 
         <createTable tableName="product_variant">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="product_code" type="VARCHAR(50)"/>
-            <column name="variant_code" type="VARCHAR(50)"/>
-            <column name="pair_variant_code" type="VARCHAR(50)"/>
-            <column name="greetings_variant_code" type="VARCHAR(50)"/>
+            <column name="product_id" type="bigint"/>
+            <column name="variant_id" type="bigint"/>
+            <column name="pair_variant_id" type="bigint"/>
+            <column name="greetings_variant_id" type="bigint"/>
             <column name="price" type="decimal(19,2)"/>
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="product_code"
+        <addForeignKeyConstraint baseColumnNames="product_id"
                                  baseTableName="product_variant"
-                                 constraintName="fk_product_variant_product_code"
-                                 referencedColumnNames="product_code"
+                                 constraintName="fk_product_variant_product_id"
+                                 referencedColumnNames="id"
                                  referencedTableName="product"/>
-        <addForeignKeyConstraint baseColumnNames="variant_code"
+        <addForeignKeyConstraint baseColumnNames="variant_id"
                                  baseTableName="product_variant"
-                                 constraintName="fk_product_variant_variant_code"
-                                 referencedColumnNames="variant_code"
+                                 constraintName="fk_product_variant_variant_id"
+                                 referencedColumnNames="id"
                                  referencedTableName="variant"/>
 
         <createTable tableName="content">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="variant_code" type="VARCHAR(50)"/>
+            <column name="variant_id" type="bigint"/>
             <column name="variant_content_code" type="VARCHAR(50)"/>
             <column name="name" type="VARCHAR(100)"/>
             <column name="picture" type="VARCHAR(255)"/>
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="variant_code"
+        <addForeignKeyConstraint baseColumnNames="variant_id"
                                  baseTableName="content"
-                                 constraintName="fk_content_variant_code"
-                                 referencedColumnNames="variant_code"
+                                 constraintName="fk_content_variant_id"
+                                 referencedColumnNames="id"
                                  referencedTableName="variant"/>
 
         <createTable tableName="pricing_range">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="product_code" type="VARCHAR(50)"/>
+            <column name="product_id" type="bigint"/>
             <column name="qty_min" type="int"/>
             <column name="qty_max" type="int"/>
             <column name="price" type="decimal(19,2)"/>
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="product_code"
+        <addForeignKeyConstraint baseColumnNames="product_id"
                                  baseTableName="pricing_range"
-                                 constraintName="fk_pricing_range_product_code"
-                                 referencedColumnNames="product_code"
+                                 constraintName="fk_pricing_range_product_id"
+                                 referencedColumnNames="id"
                                  referencedTableName="product"/>
 
     </changeSet>

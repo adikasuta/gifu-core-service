@@ -5,7 +5,6 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
-import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
@@ -25,10 +24,16 @@ public class ProductCategory {
     private String picture;
     @Column(name = "workflow_code")
     private String workflowCode;
+    @Column(name = "product_type")
+    private String productType;
+    @Column(name = "design_estimation")
+    private Integer designEstimation;
+    @Column(name = "production_estimation")
+    private Integer productionEstimation;
 
-    @OneToMany()
+    @OneToMany(fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JoinColumn(name = "product_code")
+    @JoinColumn(name = "product_category_id")
     private Set<Product> products;
 
     @Column(name = "created_date")

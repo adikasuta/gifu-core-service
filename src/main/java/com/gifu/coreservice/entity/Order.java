@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 
 @Entity
-@Table(name = "order")
+@Table(name = "order_transaction")
 @Data
 public class Order {
     @Id

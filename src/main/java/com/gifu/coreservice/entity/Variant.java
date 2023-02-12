@@ -29,7 +29,7 @@ public class Variant {
 
     @OneToMany()
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JoinColumn(name = "variant_code")
+    @JoinColumn(name = "variant_id")
     private Set<Content> contents;
 
     @Column(name = "created_date")

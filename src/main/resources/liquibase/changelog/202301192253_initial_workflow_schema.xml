@@ -26,6 +26,7 @@
             <column name="workflow_id" type="bigint"/>
             <column name="name" type="VARCHAR(100)" />
             <column name="user_role_code" type="VARCHAR(50)" />
+            <column name="default_assigned_user_id" type="bigint"/>
             <column name="should_notify" type="BOOLEAN" />
             <column name="next_step_id" type="bigint"/>
             <column name="created_date" type="TIMESTAMP"/>
@@ -70,16 +71,17 @@
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="status_pattern_code" type="VARCHAR(50)"/>
+            <column name="pattern_code_id" type="bigint"/>
+            <column name="permission_code" type="VARCHAR(50)"/>
             <column name="name" type="VARCHAR(100)" />
             <column name="next_status_id" type="bigint"/>
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="status_pattern_code"
+        <addForeignKeyConstraint baseColumnNames="pattern_code_id"
                                  baseTableName="ref_status"
-                                 constraintName="fk_ref_status_status_pattern_code"
-                                 referencedColumnNames="pattern_code"
+                                 constraintName="fk_ref_status_pattern_code_id"
+                                 referencedColumnNames="id"
                                  referencedTableName="ref_status_pattern"/>
 
 

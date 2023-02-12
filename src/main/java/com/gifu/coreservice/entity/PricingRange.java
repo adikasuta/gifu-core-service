@@ -14,8 +14,8 @@ public class PricingRange {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(name = "product_code")
-    private String productCode;
+    @Column(name = "product_id")
+    private Long productId;
     @Column(name = "qty_min")
     private Integer qtyMin;
     @Column(name = "qty_max")

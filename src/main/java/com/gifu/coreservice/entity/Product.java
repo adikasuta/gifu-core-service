@@ -1,8 +1,6 @@
 package com.gifu.coreservice.entity;
 
 import lombok.Data;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -19,8 +17,8 @@ public class Product {
 
     @Column(name = "product_code")
     private String productCode;
-    @Column(name = "category_id")
-    private Long categoryId;
+    @Column(name = "product_category_id")
+    private Long productCategoryId;
     @Column(name = "product_type")
     private Long productType;
     @Column(name = "name")
@@ -43,7 +41,7 @@ public class Product {
     private String description;
 
     @OneToMany(fetch = FetchType.EAGER)
-    @JoinColumn(name = "product_code")
+    @JoinColumn(name = "product_id")
     private Set<PricingRange> pricingRanges;
 
     @Column(name = "created_date")

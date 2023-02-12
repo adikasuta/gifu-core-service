@@ -102,7 +102,7 @@
             <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
 
-        <createTable tableName="order">
+        <createTable tableName="order_transaction">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>

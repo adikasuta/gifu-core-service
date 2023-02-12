@@ -16,8 +16,8 @@ public class Content {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(name = "variant_code")
-    private String variantCode;
+    @Column(name = "variant_id")
+    private Long variantId;
     @Column(name = "name")
     private String name;
     @Column(name = "picture")

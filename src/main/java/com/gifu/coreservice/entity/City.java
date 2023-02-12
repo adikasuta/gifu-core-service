@@ -14,8 +14,8 @@ public class City {
     private long id;
 
     private String code;
-    @Column(name = "province_code")
-    private String provinceCode;
+    @Column(name = "province_id")
+    private Long provinceId;
     @Column(name = "city_name")
     private String city_name;
     @Column(name = "created_date")

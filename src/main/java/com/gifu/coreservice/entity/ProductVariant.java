@@ -17,14 +17,14 @@ public class ProductVariant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(name = "product_code")
-    private String productCode;
-    @Column(name = "variant_code")
-    private String variantCode;
-    @Column(name = "pair_variant_code")
-    private String pairVariantCode;
-    @Column(name = "greetings_varian_code")
-    private String greetingsVarianCode;
+    @Column(name = "product_id")
+    private Long productId;
+    @Column(name = "variant_id")
+    private Long variantId;
+    @Column(name = "pair_variant_id")
+    private Long pairVariantId;
+    @Column(name = "greetings_varian_id")
+    private Long greetingsVarianId;
     @Column(name = "price")
     private BigDecimal price;
 }

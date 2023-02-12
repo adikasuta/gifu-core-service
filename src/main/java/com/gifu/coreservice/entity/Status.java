@@ -1,5 +1,6 @@
 package com.gifu.coreservice.entity;
 
+import com.gifu.coreservice.model.util.Flow;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -8,7 +9,7 @@ import java.time.ZonedDateTime;
 @Entity
 @Table(name = "status")
 @Data
-public class Status {
+public class Status implements Flow {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
@@ -20,4 +21,12 @@ public class Status {
     private String permissionCode;
     @Column(name = "next_status_id")
     private Long nextStatusId;
+    @Override
+    public Long getCurrentStepId() {
+        return id;
+    }
+    @Override
+    public Long getNextStepId() {
+        return nextStatusId;
+    }
 }

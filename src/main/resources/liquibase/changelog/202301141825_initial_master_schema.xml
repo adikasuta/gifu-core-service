@@ -22,7 +22,7 @@
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="province_code" type="VARCHAR(50)"/>
+            <column name="province_id" type="bigint"/>
             <column name="code" type="VARCHAR(50)" >
                 <constraints unique="true" nullable="false"/>
             </column>
@@ -30,17 +30,17 @@
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="province_code"
+        <addForeignKeyConstraint baseColumnNames="province_id"
                                  baseTableName="city"
-                                 constraintName="fk_city_province_code"
-                                 referencedColumnNames="code"
+                                 constraintName="fk_city_province_id"
+                                 referencedColumnNames="id"
                                  referencedTableName="province"/>
 
         <createTable tableName="district">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="city_code" type="VARCHAR(50)"/>
+            <column name="city_id" type="bigint"/>
             <column name="code" type="VARCHAR(50)" >
                 <constraints unique="true" nullable="false"/>
             </column>
@@ -48,17 +48,17 @@
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="city_code"
+        <addForeignKeyConstraint baseColumnNames="city_id"
                                  baseTableName="district"
-                                 constraintName="fk_district_city_code"
-                                 referencedColumnNames="code"
+                                 constraintName="fk_district_city_id"
+                                 referencedColumnNames="id"
                                  referencedTableName="city"/>
 
         <createTable tableName="kelurahan">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="district_code" type="VARCHAR(50)"/>
+            <column name="district_id" type="bigint"/>
             <column name="code" type="VARCHAR(50)" >
                 <constraints unique="true" nullable="false"/>
             </column>
@@ -66,10 +66,10 @@
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="district_code"
+        <addForeignKeyConstraint baseColumnNames="district_id"
                                  baseTableName="kelurahan"
-                                 constraintName="fk_kelurahan_district_code"
-                                 referencedColumnNames="code"
+                                 constraintName="fk_kelurahan_district_id"
+                                 referencedColumnNames="id"
                                  referencedTableName="district"/>
 
 

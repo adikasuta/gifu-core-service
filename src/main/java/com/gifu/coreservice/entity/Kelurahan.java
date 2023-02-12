@@ -14,8 +14,8 @@ public class Kelurahan {
     private long id;
 
     private String code;
-    @Column(name = "district_code")
-    private String districtCode;
+    @Column(name = "district_id")
+    private Long districtId;
     @Column(name = "kelurahan_name")
     private String kelurahanName;
     @Column(name = "created_date")

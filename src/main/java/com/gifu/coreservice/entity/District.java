@@ -14,8 +14,8 @@ public class District {
     private long id;
 
     private String code;
-    @Column(name = "city_code")
-    private String cityCode;
+    @Column(name = "city_id")
+    private Long cityId;
     @Column(name = "district_name")
     private String districtName;
     @Column(name = "created_date")
