@@ -4,7 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum CodePrefix {
-    WORKFLOW("WF");
+    WORKFLOW("WF"),
+    PRODUCT_CATEGORY("PCAT");
     private final String prefix;
     CodePrefix(String prefix){
         this.prefix = prefix;

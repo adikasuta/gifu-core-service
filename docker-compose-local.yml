@@ -4,7 +4,7 @@ services:
 
   app:
     build: .
-    container_name: onlinepajak-cybersource-middleware
+    container_name: gifu-core-service
     ports:
       - "9091:8080"
     expose:

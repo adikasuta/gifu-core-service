@@ -9,14 +9,13 @@
     <version>2.6.7</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
-  <groupId>com.onlinepajak</groupId>
-  <artifactId>cybersource-middleware</artifactId>
+  <groupId>com.gifu</groupId>
+  <artifactId>core-service</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <name>cybersource-middleware</name>
-  <description>cybersource-middleware</description>
+  <name>core-service</name>
+  <description>core-service</description>
   <properties>
     <java.version>11</java.version>
-    <jacoco.version>0.8.5</jacoco.version>
     <sonar.version>3.7.0.1746</sonar.version>
     <surefire.version>2.22.2</surefire.version>
   </properties>
@@ -137,40 +136,6 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <version>${jacoco.version}</version>
-        <executions>
-          <execution>
-            <id>prepare-agent</id>
-            <goals>
-              <goal>prepare-agent</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>report</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>report</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>post-unit-test</id>
-            <phase>test</phase>
-            <goals>
-              <goal>report</goal>
-            </goals>
-            <configuration>
-              <dataFile>target/jacoco.exec</dataFile>
-              <outputDirectory>target/jacoco</outputDirectory>
-              <excludes>
-                <exclude>**/*Config.*</exclude>
-              </excludes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <groupId>org.sonarsource.scanner.maven</groupId>
         <artifactId>sonar-maven-plugin</artifactId>
         <version>${sonar.version}</version>
@@ -198,6 +163,15 @@
         <configuration>
           <propertyFile>src/main/resources/application.properties</propertyFile>
           <propertyFileWillOverride>true</propertyFileWillOverride>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>appengine-maven-plugin</artifactId>
+        <version>2.4.4</version>
+        <configuration>
+          <version>1</version>
+          <projectId>gifu-378103</projectId>
         </configuration>
       </plugin>
     </plugins>
