@@ -14,6 +14,8 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(name = "order_checkout_id")
+    private Long orderCheckoutId;
     @Column(name = "order_code")
     private String orderCode;
     @Column(name = "product_code")
@@ -49,6 +51,9 @@ public class Order {
     @Column(name = "grand_total")
     private BigDecimal grandTotal;
 
+    @Column(name = "deadline")
+    private ZonedDateTime deadline;
+
     @Column(name = "notes")
     private String notes;
     @Column(name = "cs_referral_token")
@@ -58,4 +63,6 @@ public class Order {
     private ZonedDateTime createdDate;
     @Column(name = "updated_date")
     private ZonedDateTime updatedDate;
+    @Column(name = "updated_by")
+    private String updatedBy;
 }

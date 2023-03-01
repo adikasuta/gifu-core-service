@@ -13,6 +13,8 @@ public class VaBill {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
+    @Column(name = "order_checkout_id")
+    private Long orderCheckoutId;
 
     @Column(name = "va_number")
     private String vaNumber;
@@ -33,6 +35,6 @@ public class VaBill {
     private ZonedDateTime expiryDate;
     @Column(name = "remarks")
     private String remarks;
-    @Column(name = "created_by_user_id")
-    private Long createdByUserId;
+    @Column(name = "created_by")
+    private String createdBy;
 }

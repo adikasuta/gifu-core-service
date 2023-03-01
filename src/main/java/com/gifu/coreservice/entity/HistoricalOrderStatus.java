@@ -19,10 +19,8 @@ public class HistoricalOrderStatus {
     @Column(name = "status")
     private String status;
 
-    @Column(name = "created_by_user_id")
-    private Long createdByUserId;
+    @Column(name = "created_by")
+    private String createdBy;
     @Column(name = "created_date")
     private ZonedDateTime createdDate;
-    @Column(name = "updated_date")
-    private ZonedDateTime updatedDate;
 }

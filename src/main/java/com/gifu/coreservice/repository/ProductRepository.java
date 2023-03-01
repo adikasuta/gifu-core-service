@@ -14,6 +14,5 @@ import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
-//    @Query("SELECT e FROM Product e WHERE e.productCategoryCode IN (:categoryCodes)")
     List<Product> findByProductCategoryIdIn(@Param("productCategoryId") List<Long> productCategoryId);
 }

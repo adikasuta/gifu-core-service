@@ -22,14 +22,15 @@ public class OrderVariant {
     private String variantCode;
     @Column(name = "variant_name")
     private String variantName;
-    @Column(name = "price")
-    private BigDecimal price;
     @Column(name = "variant_content_code")
     private String variantContentCode;
     @Column(name = "variant_content_name")
     private String variantContentName;
     @Column(name = "variant_content_picture")
     private String variantContentPicture;
+
+    @Column(name = "order_variant_price_id")
+    private Long orderVariantPriceId;
 
     @Column(name = "created_date")
     private ZonedDateTime createdDate;

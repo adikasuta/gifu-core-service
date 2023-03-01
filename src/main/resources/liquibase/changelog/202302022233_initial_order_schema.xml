@@ -12,8 +12,8 @@
             </column>
             <column name="order_id" type="bigint"/>
             <column name="status" type="VARCHAR(50)"/>
+            <column name="created_by" type="VARCHAR(100)"/>
             <column name="created_date" type="TIMESTAMP"/>
-            <column name="updated_date" type="TIMESTAMP"/>
         </createTable>
 
         <createTable tableName="order_variant">
@@ -21,15 +21,23 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="order_id" type="bigint"/>
+            <column name="order_variant_price_id" type="bigint"/>
             <column name="variant_type_code" type="VARCHAR(50)"/>
             <column name="variant_code" type="VARCHAR(50)"/>
             <column name="variant_name" type="VARCHAR(100)"/>
-            <column name="price" type="decimal(19,2)"/>
             <column name="variant_content_code" type="VARCHAR(50)"/>
             <column name="variant_content_name" type="VARCHAR(100)"/>
             <column name="variant_content_picture" type="VARCHAR(255)"/>
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="order_variant_price">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="order_id" type="bigint"/>
+            <column name="price" type="decimal(19,2)"/>
         </createTable>
 
         <createTable tableName="order_variant_info">
@@ -85,6 +93,7 @@
             <column name="district_code" type="VARCHAR(50)"/>
             <column name="kelurahan_code" type="VARCHAR(50)"/>
             <column name="address" type="VARCHAR(255)"/>
+            <column name="postal_code" type="VARCHAR(50)"/>
             <column name="preferred_shipping_vendor" type="bigint"/>
             <column name="use_wooden_crate" type="boolean"/>
             <column name="created_date" type="TIMESTAMP"/>
@@ -106,6 +115,7 @@
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
+            <column name="order_checkout_id" type="bigint"/>
             <column name="order_code" type="VARCHAR(50)"/>
             <column name="product_code" type="VARCHAR(50)"/>
             <column name="product_type" type="VARCHAR(50)"/>
@@ -127,8 +137,10 @@
             <column name="notes" type="TEXT"/>
             <column name="cs_referral_token" type="VARCHAR(255)"/>
 
+            <column name="deadline" type="TIMESTAMP"/>
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
         </createTable>
 
     </changeSet>

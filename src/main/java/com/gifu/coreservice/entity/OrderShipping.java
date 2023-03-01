@@ -25,6 +25,8 @@ public class OrderShipping {
     private String kelurahanCode;
     @Column(name = "address")
     private String address;
+    @Column(name = "postal_code")
+    private String postalCode;
     @Column(name = "preferred_shipping_vendor")
     private Long preferredShippingVendor;
     @Column(name = "use_wooden_crate")

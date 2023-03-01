@@ -4,10 +4,12 @@ import lombok.Getter;
 
 @Getter
 public enum ProductType {
-    SOUVENIR("Souvenir"),
-    INVITATION("Invitation");
+    SOUVENIR("Souvenir", "S"),
+    INVITATION("Invitation", "I");
     private final String label;
-    ProductType(String label){
+    private final String invoiceCode;
+    ProductType(String label, String invoiceCode){
         this.label = label;
+        this.invoiceCode = invoiceCode;
     }
 }
