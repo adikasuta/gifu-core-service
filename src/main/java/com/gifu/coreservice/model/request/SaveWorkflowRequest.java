@@ -8,11 +8,11 @@ import java.util.List;
 
 @Data
 public class SaveWorkflowRequest {
-    private Long workflowId;
+    private Long id;
     @NotEmpty
-    private String workflowName;
+    private String name;
     @NotEmpty
-    private List<Long> categoryProductIds;
+    private List<Long> productCategoryIds;
     @NotEmpty
     private List<StepDto> steps;
 }

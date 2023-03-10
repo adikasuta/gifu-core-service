@@ -22,6 +22,8 @@ public class Step implements Flow {
     private String userRoleCode;
     @Column(name = "default_assigned_user_id")
     private Long defaultAssignedUserId;
+    @Column(name = "need_approval")
+    private Boolean needApproval;
     @Column(name = "should_notify")
     private Boolean shouldNotify;
     @Column(name = "next_step_id")
@@ -35,6 +37,10 @@ public class Step implements Flow {
     private ZonedDateTime createdDate;
     @Column(name = "updated_date")
     private ZonedDateTime updatedDate;
+    @Column(name = "created_by")
+    private String createdBy;
+    @Column(name = "updated_by")
+    private String updatedBy;
 
     @Override
     public Long getCurrentStepId() {

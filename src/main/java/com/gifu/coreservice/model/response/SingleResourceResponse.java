@@ -7,20 +7,20 @@ import org.springframework.http.HttpStatus;
 public class SingleResourceResponse<T> {
     private String message;
     private T data;
-    private String status;
+    private Integer status;
 
     public SingleResourceResponse(T data){
         this.data = data;
         this.message = "Success";
-        this.status = String.valueOf(HttpStatus.OK.value());
+        this.status = HttpStatus.OK.value();
     }
 
     public SingleResourceResponse(String message){
         this.message = message;
-        this.status = String.valueOf(HttpStatus.OK.value());
+        this.status = HttpStatus.OK.value();
     }
 
-    public SingleResourceResponse(String message, String status){
+    public SingleResourceResponse(String message, Integer status){
         this.message = message;
         this.status = status;
     }

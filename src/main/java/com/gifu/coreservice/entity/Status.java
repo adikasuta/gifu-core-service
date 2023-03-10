@@ -21,6 +21,10 @@ public class Status implements Flow {
     private String permissionCode;
     @Column(name = "next_status_id")
     private Long nextStatusId;
+    @Column(name = "created_by")
+    private String createdBy;
+    @Column(name = "updated_by")
+    private String updatedBy;
     @Override
     public Long getCurrentStepId() {
         return id;

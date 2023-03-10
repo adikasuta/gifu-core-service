@@ -26,7 +26,7 @@ public class BasicSpec<T> implements Specification<T> {
         switch (criteria.getOperation()) {
             case EQUALS:
                 return builder.equal(
-                        root.get(criteria.getKey()), criteria.getValue().toString());
+                        root.get(criteria.getKey()), criteria.getValue());
             case LIKE:
                 if (root.get(criteria.getKey()).getJavaType() == String.class) {
                     return builder.like(

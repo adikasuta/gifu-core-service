@@ -9,6 +9,7 @@ import java.util.List;
 @Builder
 public class WorkflowDto {
     private Long id;
+    private String workflowCode;
     private String name;
     private List<ProductCategoryDto> productCategories;
     private List<ProductDto> products;

@@ -14,6 +14,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductCategoryService {
@@ -24,9 +26,18 @@ public class ProductCategoryService {
     @Value("${picture.path}")
     private String pictureBasePath;
 
-    public String generateWorkflowCode() {
-        long count = productCategoryRepository.count();
-        return CodePrefix.PRODUCT_CATEGORY.getPrefix().concat(StringUtils.toDigits(count, 5));
+    public List<ProductCategoryDto> getAllProductCategory() {
+        List<ProductCategory> productCategories = productCategoryRepository.findAll();
+        return productCategories.stream().map(productCategory ->
+                ProductCategoryDto.builder()
+                        .id(productCategory.getId())
+                        .name(productCategory.getName())
+                        .picture(productCategory.getPicture())
+                        .workflowCode(productCategory.getWorkflowCode())
+                        .productType(productCategory.getProductType())
+                        .designEstimation(productCategory.getDesignEstimation())
+                        .productionEstimation(productCategory.getProductionEstimation())
+                        .build()).collect(Collectors.toList());
     }
 
     public ProductCategoryDto createProductCategory(SaveProductCategoryRequest request, MultipartFile pictureFile) throws IOException {
@@ -34,7 +45,6 @@ public class ProductCategoryService {
         String filePath = fileUtils.storeFile(pictureFile, pictureBasePath);
         ProductCategory productCategory = new ProductCategory();
         productCategory.setName(request.getName());
-        productCategory.setProductCategoryCode(generateWorkflowCode());
         productCategory.setProductType(request.getProductTypeCode().name());
         productCategory.setDesignEstimation(request.getDesignEstimation());
         productCategory.setPicture(filePath);

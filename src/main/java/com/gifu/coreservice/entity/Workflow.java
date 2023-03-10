@@ -29,6 +29,10 @@ public class Workflow {
 
     @Column(name = "created_date")
     private ZonedDateTime createdDate;
+    @Column(name = "created_by")
+    private String createdBy;
+    @Column(name = "updated_by")
+    private String updatedBy;
     @Column(name = "updated_date")
     private ZonedDateTime updatedDate;
 }

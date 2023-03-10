@@ -20,4 +20,6 @@ public class Timeline {
 
     @Column(name = "created_date")
     private ZonedDateTime createdDate;
+    @Column(name = "created_by")
+    private String createdBy;
 }

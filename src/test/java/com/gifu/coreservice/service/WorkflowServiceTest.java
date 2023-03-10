@@ -50,12 +50,15 @@ class WorkflowServiceTest {
     private User produksi;
     private User packing;
 
+    private User sessionUser;
+
     @BeforeAll
     public void setUp() {
         staff = createRole();
         designer = createUser("designer", staff.getId());
         produksi = createUser("produksi", staff.getId());
         packing = createUser("packing", staff.getId());
+        sessionUser = createUser("tester", staff.getId());
     }
 
     @AfterEach
@@ -90,11 +93,9 @@ class WorkflowServiceTest {
     private List<ProductCategory> createCategories() {
         ProductCategory category1 = new ProductCategory();
         category1.setName("category1");
-        category1.setProductCategoryCode("category1");
         productCategoryRepository.save(category1);
         ProductCategory category2 = new ProductCategory();
         category2.setName("category2");
-        category2.setProductCategoryCode("category2");
         productCategoryRepository.save(category2);
         return Arrays.asList(category1, category2);
     }
@@ -122,12 +123,12 @@ class WorkflowServiceTest {
     public void test_create_shouldCreateWorkflow() {
         List<ProductCategory> categories = createCategories();
         SaveWorkflowRequest request = new SaveWorkflowRequest();
-        request.setWorkflowName("Workflow Test");
-        request.setCategoryProductIds(categories.stream().map(ProductCategory::getId).collect(Collectors.toList()));
+        request.setName("Workflow Test");
+        request.setProductCategoryIds(categories.stream().map(ProductCategory::getId).collect(Collectors.toList()));
         request.setSteps(mockSteps());
 
         String workflowCode = workflowService.generateWorkflowCode();
-        WorkflowDto result = workflowService.createWorkflow(request, workflowCode);
+        WorkflowDto result = workflowService.createWorkflow(request, workflowCode, sessionUser.getEmail());
 
         assertThat(workflowCode).startsWith(CodePrefix.WORKFLOW.getPrefix());
         assertThat(result.getName()).isEqualTo("Workflow Test");

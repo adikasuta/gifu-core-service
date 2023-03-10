@@ -17,11 +17,9 @@ public class TimelineStepStatus {
     private Long stepTimelineDetailId;
     @Column(name = "status_id")
     private Long statusId;
-    @Column(name = "created_by_user_id")
-    private Long createdByUserId;
 
     @Column(name = "created_date")
     private ZonedDateTime createdDate;
-    @Column(name = "updated_date")
-    private ZonedDateTime updatedDate;
+    @Column(name = "created_by")
+    private String createdBy;
 }

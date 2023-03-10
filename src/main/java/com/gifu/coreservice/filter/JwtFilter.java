@@ -43,7 +43,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
     public JwtFilter(UserRepository userRepo) {
         this.userRepo = userRepo;
+        this.excludeUrlPatterns.add("/hello");
+        this.excludeUrlPatterns.add("/api/**");
         this.excludeUrlPatterns.add("/api/public/**");
+        this.excludeUrlPatterns.add("/api/auth/change-password");
+        this.excludeUrlPatterns.add("/api/auth/signup");
         this.excludeUrlPatterns.add("/api/auth/login");
         this.excludeUrlPatterns.add("/api/auth/logout");
     }

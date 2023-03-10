@@ -16,8 +16,6 @@ public class ProductCategory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(name = "product_category_code")
-    private String productCategoryCode;
     @Column(name = "name")
     private String name;
     @Column(name = "picture")

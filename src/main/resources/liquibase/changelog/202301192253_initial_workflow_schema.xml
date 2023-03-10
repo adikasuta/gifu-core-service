@@ -17,6 +17,8 @@
             <column name="is_deleted" type="BOOLEAN" />
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
         </createTable>
 
         <createTable tableName="step">
@@ -28,9 +30,12 @@
             <column name="user_role_code" type="VARCHAR(50)" />
             <column name="default_assigned_user_id" type="bigint"/>
             <column name="should_notify" type="BOOLEAN" />
+            <column name="need_approval" type="BOOLEAN" />
             <column name="next_step_id" type="bigint"/>
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="workflow_id"
                                  baseTableName="step"
@@ -48,6 +53,8 @@
             <column name="permission_code" type="VARCHAR(50)" />
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="step_id"
                                  baseTableName="status"
@@ -92,7 +99,7 @@
             <column name="order_id" type="bigint"/>
             <column name="workflow_id" type="bigint"/>
             <column name="created_date" type="TIMESTAMP"/>
-            <column name="updated_date" type="TIMESTAMP"/>
+            <column name="created_by" type="VARCHAR(100)"/>
         </createTable>
 
         <createTable tableName="timeline_step">
@@ -103,7 +110,7 @@
             <column name="assignee_user_id" type="bigint"/>
             <column name="step_id" type="bigint"/>
             <column name="created_date" type="TIMESTAMP"/>
-            <column name="updated_date" type="TIMESTAMP"/>
+            <column name="created_by" type="VARCHAR(100)"/>
         </createTable>
 
         <createTable tableName="timeline_step_status">
@@ -112,9 +119,8 @@
             </column>
             <column name="step_timeline_detail_id" type="bigint"/>
             <column name="status_id" type="bigint"/>
-            <column name="created_by_user_id" type="bigint"/>
             <column name="created_date" type="TIMESTAMP"/>
-            <column name="updated_date" type="TIMESTAMP"/>
+            <column name="created_by" type="VARCHAR(100)"/>
         </createTable>
 
     </changeSet>

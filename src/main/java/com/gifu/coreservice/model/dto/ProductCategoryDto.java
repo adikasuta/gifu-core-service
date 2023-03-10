@@ -10,7 +10,6 @@ import javax.persistence.Column;
 public class ProductCategoryDto {
     private Long id;
     private String name;
-    private String productCategoryCode;
     private String picture;
     private String workflowCode;
     private String productType;

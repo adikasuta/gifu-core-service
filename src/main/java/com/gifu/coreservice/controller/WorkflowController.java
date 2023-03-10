@@ -1,11 +1,15 @@
 package com.gifu.coreservice.controller;
 
+import com.gifu.coreservice.entity.User;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.WorkflowDto;
+import com.gifu.coreservice.model.request.ChangeWorkflowNameRequest;
 import com.gifu.coreservice.model.request.SaveWorkflowRequest;
 import com.gifu.coreservice.model.request.SearchWorkflowInput;
 import com.gifu.coreservice.model.response.SingleResourceResponse;
 import com.gifu.coreservice.service.WorkflowService;
+import com.gifu.coreservice.utils.SessionUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 
 @RestController
+@Slf4j
 @RequestMapping(path = "api/workflow")
 public class WorkflowController {
 
@@ -24,14 +29,18 @@ public class WorkflowController {
 
     @GetMapping
     public ResponseEntity<SingleResourceResponse<Page<WorkflowDto>>> searchWorkflow
-            (@RequestParam String categoryName, Pageable page) {
+            (@RequestParam String fieldName, @RequestParam String query, Pageable page) {
         try {
             SearchWorkflowInput input = new SearchWorkflowInput();
-            input.setCategoryName(categoryName);
+            input.setFieldName(fieldName);
+            input.setQuery(query);
             Page<WorkflowDto> result = workflowService.searchWorkflow(input, page);
             return ResponseEntity.ok(new SingleResourceResponse<>(result));
         } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            log.error("ERROR GET WORKFLOW: " + ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
         }
     }
 
@@ -41,10 +50,31 @@ public class WorkflowController {
     ) {
         try {
             String code = workflowService.generateWorkflowCode();
-            WorkflowDto result = workflowService.createWorkflow(request, code);
+            User user = SessionUtils.getUserContext();
+            WorkflowDto result = workflowService.createWorkflow(request, code, user.getEmail());
             return ResponseEntity.ok(new SingleResourceResponse<>(result));
         } catch (Exception ex) {
+            log.error("ERROR POST WORKFLOW: " + ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PutMapping("/name")
+    public ResponseEntity<SingleResourceResponse<WorkflowDto>> changeWorkflowName(
+            @Valid @RequestBody ChangeWorkflowNameRequest request
+    ) {
+        try {
+            User user = SessionUtils.getUserContext();
+            WorkflowDto result = workflowService.changeName(request, user.getEmail());
+            return ResponseEntity.ok(new SingleResourceResponse<>(result));
+        } catch (InvalidRequestException ex) {
+            log.error("ERROR PUT WORKFLOW: " + ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new SingleResourceResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value()));
+        } catch (Exception ex) {
+            log.error("ERROR PUT WORKFLOW: " + ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
         }
     }
 
@@ -53,16 +83,44 @@ public class WorkflowController {
             @Valid @RequestBody SaveWorkflowRequest request
     ) {
         try {
-            if (request.getWorkflowId() == null) {
+            if (request.getId() == null) {
                 throw new InvalidRequestException("Workflow id is required", null);
             }
-            WorkflowDto result = workflowService.replaceWorkflow(request);
+            User user = SessionUtils.getUserContext();
+            WorkflowDto result;
+            if (workflowService.isMinorChanges(request)) {
+                result = workflowService.minorUpdate(request, user.getEmail());
+            } else {
+                result = workflowService.replaceWorkflow(request, user.getEmail());
+            }
             return ResponseEntity.ok(new SingleResourceResponse<>(result));
         } catch (InvalidRequestException ex) {
+            log.error("ERROR PUT WORKFLOW: " + ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new SingleResourceResponse<>(ex.getMessage(), String.valueOf(HttpStatus.BAD_REQUEST.value())));
+                    .body(new SingleResourceResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value()));
         } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            log.error("ERROR PUT WORKFLOW: " + ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
+        }
+    }
+
+    @DeleteMapping("/{workflowId}")
+    public ResponseEntity<SingleResourceResponse<WorkflowDto>> deleteWorkflow(
+            @PathVariable("workflowId") Long workflowId
+    ) {
+        try {
+            User user = SessionUtils.getUserContext();
+            WorkflowDto result = workflowService.deleteWorkflow(workflowId, user.getEmail());
+            return ResponseEntity.ok(new SingleResourceResponse<>(result));
+        } catch (InvalidRequestException ex) {
+            log.error("ERROR PUT WORKFLOW: " + ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new SingleResourceResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value()));
+        } catch (Exception ex) {
+            log.error("ERROR PUT WORKFLOW: " + ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
         }
     }
 }

@@ -39,9 +39,6 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="name" type="VARCHAR(100)"/>
-            <column name="product_category_code" type="VARCHAR(50)">
-                <constraints unique="true" nullable="false"/>
-            </column>
             <column name="workflow_code" type="VARCHAR(50)"/>
             <column name="picture" type="VARCHAR(255)" />
             <column name="product_type" type="VARCHAR(50)"/>

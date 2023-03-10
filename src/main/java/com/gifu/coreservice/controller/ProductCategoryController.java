@@ -2,9 +2,7 @@ package com.gifu.coreservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gifu.coreservice.model.dto.ProductCategoryDto;
-import com.gifu.coreservice.model.dto.WorkflowDto;
 import com.gifu.coreservice.model.request.SaveProductCategoryRequest;
-import com.gifu.coreservice.model.request.SaveWorkflowRequest;
 import com.gifu.coreservice.model.response.SingleResourceResponse;
 import com.gifu.coreservice.service.ProductCategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping(path = "api/product-category")
@@ -33,6 +31,16 @@ public class ProductCategoryController {
         try {
             SaveProductCategoryRequest request = objectMapper.readValue(payload, SaveProductCategoryRequest.class);
             ProductCategoryDto result = productCategoryService.createProductCategory(request, file);
+            return ResponseEntity.ok(new SingleResourceResponse<>(result));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<SingleResourceResponse<List<ProductCategoryDto>>> getProductCategory() {
+        try {
+            List<ProductCategoryDto> result = productCategoryService.getAllProductCategory();
             return ResponseEntity.ok(new SingleResourceResponse<>(result));
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

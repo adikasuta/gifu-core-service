@@ -4,6 +4,7 @@ import com.gifu.coreservice.model.util.Flow;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.time.ZonedDateTime;
 
 @Entity
 @Table(name = "ref_status")
@@ -20,6 +21,10 @@ public class RefStatus implements Flow {
     private String permissionCode;
     @Column(name = "next_status_id")
     private Long nextStatusId;
+    @Column(name = "created_date")
+    private ZonedDateTime createdDate;
+    @Column(name = "updated_date")
+    private ZonedDateTime updatedDate;
 
     @Override
     public Long getCurrentStepId() {
