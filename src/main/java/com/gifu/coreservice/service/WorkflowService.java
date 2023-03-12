@@ -58,6 +58,7 @@ public class WorkflowService {
         if (existing.isEmpty()) {
             throw new InvalidRequestException("No workflow to remove", null);
         }
+        resetProductCategoryWorkflow(existing.get().getWorkflowCode());
         existing.get().setIsDeleted(true);
         existing.get().setUpdatedDate(ZonedDateTime.now());
         existing.get().setUpdatedBy(deleterEmail);
@@ -197,6 +198,8 @@ public class WorkflowService {
                     status.setPermissionCode(refStatus.getPermissionCode());
                     status.setStepId(step.getId());
                     status.setNextStatusId(nextStatusId);
+                    status.setCreatedBy(creatorEmail);
+                    status.setCreatedDate(ZonedDateTime.now());
                     statusRepository.save(status);
                     nextStatusId = status.getId();
                 }
@@ -279,13 +282,17 @@ public class WorkflowService {
         List<ProductCategory> productCategories = productCategoryRepository.findAll(Specification.where(like));
 
         List<String> workflowCodes = productCategories.stream().map(ProductCategory::getWorkflowCode).collect(Collectors.toList());
-        BasicSpec<Workflow> inWorkflowCodes = new BasicSpec<>(new SearchCriteria(
-                "workflowCode", SearchOperation.IN, workflowCodes
-        ));
-        BasicSpec<Workflow> isNotDeletedWorkflow = new BasicSpec<>(new SearchCriteria(
-                "isDeleted", SearchOperation.EQUALS, false
-        ));
-        Page<Workflow> workflows = workflowRepository.findAll(Specification.where(inWorkflowCodes).and(isNotDeletedWorkflow), pageable);
+        Page<Workflow> workflows = Page.empty(pageable);
+        if(!workflowCodes.isEmpty()){
+            BasicSpec<Workflow> inWorkflowCodes = new BasicSpec<>(new SearchCriteria(
+                    "workflowCode", SearchOperation.IN, workflowCodes
+            ));
+            BasicSpec<Workflow> isNotDeletedWorkflow = new BasicSpec<>(new SearchCriteria(
+                    "isDeleted", SearchOperation.EQUALS, false
+            ));
+            workflows = workflowRepository.findAll(Specification.where(inWorkflowCodes).and(isNotDeletedWorkflow), pageable);
+        }
+
         return workflows.map(this::getDto);
     }
 

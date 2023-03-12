@@ -23,8 +23,8 @@ public class Status implements Flow {
     private Long nextStatusId;
     @Column(name = "created_by")
     private String createdBy;
-    @Column(name = "updated_by")
-    private String updatedBy;
+    @Column(name = "created_date")
+    private ZonedDateTime createdDate;
     @Override
     public Long getCurrentStepId() {
         return id;

@@ -1,6 +1,5 @@
 package com.gifu.coreservice.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gifu.coreservice.model.dto.ProductCategoryDto;
 import com.gifu.coreservice.model.request.SaveProductCategoryRequest;
 import com.gifu.coreservice.model.response.SingleResourceResponse;
@@ -10,7 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -20,17 +18,33 @@ public class ProductCategoryController {
 
     @Autowired
     private ProductCategoryService productCategoryService;
-    @Autowired
-    private ObjectMapper objectMapper;
 
-    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    //TODO: in case need to upload picture
+//    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+//    public ResponseEntity<SingleResourceResponse<ProductCategoryDto>> postProductCategory(
+//            @RequestPart("payload") String payload,
+//            @RequestPart("file") MultipartFile file
+//    )
+    @PostMapping
     public ResponseEntity<SingleResourceResponse<ProductCategoryDto>> postProductCategory(
-            @RequestPart("payload") String payload,
-            @RequestPart("file") MultipartFile file
+            @RequestBody SaveProductCategoryRequest request
     ) {
         try {
-            SaveProductCategoryRequest request = objectMapper.readValue(payload, SaveProductCategoryRequest.class);
-            ProductCategoryDto result = productCategoryService.createProductCategory(request, file);
+            ProductCategoryDto result = productCategoryService.createProductCategory(request, null);
+            return ResponseEntity.ok(new SingleResourceResponse<>(result));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
+        }
+    }
+
+    @PutMapping
+    public ResponseEntity<SingleResourceResponse<ProductCategoryDto>> putProductCategory(
+            @RequestBody SaveProductCategoryRequest request
+    ) {
+        try {
+            ProductCategoryDto result = productCategoryService.updateProductCategory(request, null);
             return ResponseEntity.ok(new SingleResourceResponse<>(result));
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -42,6 +56,18 @@ public class ProductCategoryController {
         try {
             List<ProductCategoryDto> result = productCategoryService.getAllProductCategory();
             return ResponseEntity.ok(new SingleResourceResponse<>(result));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<SingleResourceResponse<String>> deleteProductCategory(
+            @PathVariable("id") Long id
+    ) {
+        try {
+            productCategoryService.deleteProductCategory(id);
+            return ResponseEntity.ok(new SingleResourceResponse<>("Delete Success"));
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

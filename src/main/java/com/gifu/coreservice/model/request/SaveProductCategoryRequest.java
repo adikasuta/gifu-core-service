@@ -10,7 +10,7 @@ import javax.validation.constraints.NotNull;
 public class SaveProductCategoryRequest {
     private Long id;
     @NotEmpty
-    private ProductType productTypeCode;
+    private ProductType productType;
     @NotEmpty
     private String name;
     @NotNull
