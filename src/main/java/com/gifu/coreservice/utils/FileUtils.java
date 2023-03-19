@@ -1,5 +1,6 @@
 package com.gifu.coreservice.utils;
 
+import liquibase.util.file.FilenameUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -7,6 +8,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class FileUtils {
     public File getFileFromResource(String fileName) throws URISyntaxException {
@@ -20,14 +23,24 @@ public class FileUtils {
         }
     }
 
+    private void createDirectoryIfNotExists(String directoryPath) throws IOException {
+        if (!Files.exists(Paths.get(directoryPath))) {
+            Files.createDirectories(Paths.get(directoryPath));
+        }
+    }
+
+
     public String storeFile(MultipartFile multipartFile, String systemPath) throws IOException {
-        String filePath = systemPath + multipartFile.getOriginalFilename();
+        createDirectoryIfNotExists(systemPath);
+        String extension = FilenameUtils.getExtension(multipartFile.getOriginalFilename());
+        String newFileName = System.currentTimeMillis() + "." + extension;
+        String filePath = systemPath + File.separator + newFileName;
         File path = new File(filePath);
         path.createNewFile();
         FileOutputStream output = new FileOutputStream(path);
         output.write(multipartFile.getBytes());
         output.close();
-        return filePath;
+        return newFileName;
     }
 
 }

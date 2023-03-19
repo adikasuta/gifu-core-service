@@ -62,9 +62,8 @@ public class VariantController {
         }
     }
 
-    @PostMapping("/{id}")
+    @PostMapping
     public ResponseEntity<SingleResourceResponse<String>> saveVariant(
-            @PathVariable Long id,
             @RequestBody SaveVariantRequest request
     ) {
         try {
