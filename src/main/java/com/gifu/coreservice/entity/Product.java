@@ -1,6 +1,10 @@
 package com.gifu.coreservice.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.Filter;
+import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.ParamDef;
+import org.hibernate.annotations.SQLDelete;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -10,6 +14,9 @@ import java.util.Set;
 @Entity
 @Table(name = "product")
 @Data
+@SQLDelete(sql = "UPDATE product SET is_deleted = true WHERE id=?")
+@FilterDef(name = "deletedProductFilter", parameters = @ParamDef(name = "isDeleted", type = "boolean"))
+@Filter(name = "deletedProductFilter", condition = "is_deleted = :isDeleted")
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,6 +46,10 @@ public class Product {
     private Integer minOrder;
     @Column(name = "description")
     private String description;
+    @Column(name = "is_deleted")
+    private boolean isDeleted = Boolean.FALSE;
+    @Column(name = "is_not_available")
+    private Boolean isNotAvailable;
 
     @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "product_id")

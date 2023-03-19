@@ -1,16 +1,21 @@
 package com.gifu.coreservice.entity;
 
 import lombok.Data;
+import org.hibernate.annotations.*;
 import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
 @Entity
 @Table(name = "product_category")
 @Data
+@SQLDelete(sql = "UPDATE product_category SET is_deleted = true WHERE id=?")
+@FilterDef(name = "deletedCategoryFilter", parameters = @ParamDef(name = "isDeleted", type = "boolean"))
+@Filter(name = "deletedCategoryFilter", condition = "is_deleted = :isDeleted")
 public class ProductCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,6 +33,8 @@ public class ProductCategory {
     private Integer designEstimation;
     @Column(name = "production_estimation")
     private Integer productionEstimation;
+    @Column(name = "is_deleted")
+    private boolean isDeleted = Boolean.FALSE;
 
     @OneToMany(fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

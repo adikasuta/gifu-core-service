@@ -101,6 +101,7 @@ public class OrderPaymentService {
         return null;
     }
 
+    //TODO: list checkout order payment
     public VaBill createVaBillPayment(CreateVaBillPaymentRequest request) throws InvalidRequestException {
         Optional<OrderCheckoutPayment> orderCheckoutPaymentOpt = orderCheckoutPaymentRepository.findByOrderCheckoutIdAndSequenceNo(request.getOrderCheckoutId(), request.getSequenceNo());
         if(orderCheckoutPaymentOpt.isEmpty()){

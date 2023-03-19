@@ -1,16 +1,21 @@
 package com.gifu.coreservice.entity;
 
 import lombok.Data;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.*;
 import org.hibernate.annotations.Cache;
 
 import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.time.ZonedDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "workflow")
 @Data
+@SQLDelete(sql = "UPDATE workflow SET is_deleted = true WHERE id=?")
+@FilterDef(name = "deletedWorkflowFilter", parameters = @ParamDef(name = "isDeleted", type = "boolean"))
+@Filter(name = "deletedWorkflowFilter", condition = "is_deleted = :isDeleted")
 public class Workflow {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,7 +24,7 @@ public class Workflow {
     @Column(name = "workflowCode")
     private String workflowCode;
     @Column(name = "is_deleted")
-    private Boolean isDeleted;
+    private boolean isDeleted = Boolean.FALSE;
     private String name;
 
     @OneToMany()

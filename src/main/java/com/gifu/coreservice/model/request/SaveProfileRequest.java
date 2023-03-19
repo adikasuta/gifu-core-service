@@ -1,15 +1,12 @@
-package com.gifu.coreservice.model.dto;
+package com.gifu.coreservice.model.request;
 
-import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
 
 @Data
-@Builder
-public class UserDto {
+public class SaveProfileRequest {
     private Long id;
-    private String generatedPassword;
     private String username;
     private String name;
     private String email;

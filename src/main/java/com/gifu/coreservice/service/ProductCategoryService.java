@@ -1,13 +1,18 @@
 package com.gifu.coreservice.service;
 
 import com.gifu.coreservice.entity.ProductCategory;
+import com.gifu.coreservice.enumeration.SearchOperation;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.ProductCategoryDto;
 import com.gifu.coreservice.model.request.SaveProductCategoryRequest;
 import com.gifu.coreservice.repository.ProductCategoryRepository;
+import com.gifu.coreservice.repository.spec.BasicSpec;
+import com.gifu.coreservice.repository.spec.SearchCriteria;
 import com.gifu.coreservice.utils.FileUtils;
+import com.gifu.coreservice.utils.SpecUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,6 +32,7 @@ public class ProductCategoryService {
     private String pictureBasePath;
 
     public List<ProductCategoryDto> getAllProductCategory() {
+//        Specification<ProductCategory> notDeleted = new SpecUtils<ProductCategory>().isNotTrue("isDeleted");
         List<ProductCategory> productCategories = productCategoryRepository.findAll();
         return productCategories.stream().map(productCategory ->
                 ProductCategoryDto.builder()
@@ -40,7 +46,7 @@ public class ProductCategoryService {
                         .build()).collect(Collectors.toList());
     }
 
-    public boolean deleteProductCategory(Long id){
+    public boolean deleteProductCategory(Long id) {
         productCategoryRepository.deleteById(id);
         return true;
     }

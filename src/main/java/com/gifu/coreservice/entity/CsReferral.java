@@ -18,6 +18,6 @@ public class CsReferral {
     private Long userId;
     @Column(name = "created_date")
     private ZonedDateTime createdDate;
-    @Column(name = "updated_date")
-    private ZonedDateTime updatedDate;
+    @Column(name = "inactive_date")
+    private ZonedDateTime inactiveDate;
 }

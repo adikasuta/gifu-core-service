@@ -14,7 +14,9 @@
                 <constraints unique="true" nullable="false"/>
             </column>
             <column name="name" type="VARCHAR(100)" />
-            <column name="is_deleted" type="BOOLEAN" />
+            <column name="is_deleted" type="BOOLEAN" defaultValueBoolean="false" >
+                <constraints nullable="false"/>
+            </column>
             <column name="created_date" type="TIMESTAMP"/>
             <column name="updated_date" type="TIMESTAMP"/>
             <column name="created_by" type="VARCHAR(100)"/>

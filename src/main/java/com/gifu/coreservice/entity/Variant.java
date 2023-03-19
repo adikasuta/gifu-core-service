@@ -26,6 +26,8 @@ public class Variant {
     private String picture;
     @Column(name = "allowed_be_secondary")
     private Boolean allowedBeSecondary;
+    @Column(name = "updated_by")
+    private String updatedBy;
 
     @OneToMany()
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

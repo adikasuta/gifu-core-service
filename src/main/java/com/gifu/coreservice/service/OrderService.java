@@ -2,16 +2,24 @@ package com.gifu.coreservice.service;
 
 import com.gifu.coreservice.entity.*;
 import com.gifu.coreservice.enumeration.OrderStatus;
+import com.gifu.coreservice.enumeration.SearchOperation;
 import com.gifu.coreservice.enumeration.SystemConst;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.CustomerDetailsDto;
+import com.gifu.coreservice.model.dto.DashboardOrderDto;
 import com.gifu.coreservice.model.dto.InvoiceSouvenirDto;
 import com.gifu.coreservice.model.dto.ShippingDetailsDto;
 import com.gifu.coreservice.model.request.ChangeStatusRequest;
 import com.gifu.coreservice.model.request.ConfirmOrderRequest;
 import com.gifu.coreservice.model.request.OrderSouvenirRequest;
+import com.gifu.coreservice.model.request.SearchDashboardOrderRequest;
 import com.gifu.coreservice.repository.*;
+import com.gifu.coreservice.repository.spec.BasicSpec;
+import com.gifu.coreservice.repository.spec.SearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -61,6 +69,37 @@ public class OrderService {
     @Autowired
     private HistoricalOrderStatusService historicalOrderStatusService;
 
+    public Page<DashboardOrderDto> getDashboardOrderPage(SearchDashboardOrderRequest request, Pageable pageable){
+        BasicSpec<Order> productType = new BasicSpec<>(
+                new SearchCriteria("productType", SearchOperation.EQUALS,request.getProductType())
+        );
+        BasicSpec<Order> periodFrom = new BasicSpec<>(
+                new SearchCriteria("checkoutDate", SearchOperation.GREATER_THAN_EQUALS, request.getPeriodFrom())
+        );
+        BasicSpec<Order> periodUntil = new BasicSpec<>(
+                new SearchCriteria("checkoutDate", SearchOperation.LESSER_THAN_EQUALS, request.getPeriodFrom())
+        );
+
+        Page<Order> orders = orderRepository.findAll(Specification.where(productType).and(periodFrom).and(periodUntil), pageable);
+        return orders.map(it -> {
+            DashboardOrderDto result = DashboardOrderDto.builder()
+                    .id(it.getId())
+                    .orderCode(it.getOrderCode())
+                    .deadline(it.getDeadline())
+                    .grandTotal(it.getGrandTotal())
+                    .customerName(it.getCustomerName())
+                    .quantity(it.getQuantity())
+                    .paymentDate(null)//TODO
+                    .eventDate(null)//TODO
+                    .build();
+            Optional<Product> product = productRepository.findById(it.getProductId());
+            product.ifPresent(value -> result.setProductName(value.getName()));
+
+            return result;
+        });
+    }
+
+    //TODO: recalculate order checkout payment
     private OrderCheckout syncOrderCheckout(Long orderCheckoutId, String updaterEmail) throws InvalidRequestException {
         Optional<OrderCheckout> checkoutOpt = orderCheckoutRepository.findById(orderCheckoutId);
         if(checkoutOpt.isEmpty()){

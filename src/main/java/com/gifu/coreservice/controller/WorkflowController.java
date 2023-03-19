@@ -55,7 +55,9 @@ public class WorkflowController {
             return ResponseEntity.ok(new SingleResourceResponse<>(result));
         } catch (Exception ex) {
             log.error("ERROR POST WORKFLOW: " + ex.getMessage(), ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
         }
     }
 
@@ -68,11 +70,11 @@ public class WorkflowController {
             WorkflowDto result = workflowService.changeName(request, user.getEmail());
             return ResponseEntity.ok(new SingleResourceResponse<>(result));
         } catch (InvalidRequestException ex) {
-            log.error("ERROR PUT WORKFLOW: " + ex.getMessage(), ex);
+            log.error("ERROR PUT WORKFLOW NAME: " + ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new SingleResourceResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value()));
         } catch (Exception ex) {
-            log.error("ERROR PUT WORKFLOW: " + ex.getMessage(), ex);
+            log.error("ERROR PUT WORKFLOW NAME: " + ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
         }
@@ -114,11 +116,11 @@ public class WorkflowController {
             WorkflowDto result = workflowService.deleteWorkflow(workflowId, user.getEmail());
             return ResponseEntity.ok(new SingleResourceResponse<>(result));
         } catch (InvalidRequestException ex) {
-            log.error("ERROR PUT WORKFLOW: " + ex.getMessage(), ex);
+            log.error("ERROR DELETE WORKFLOW: " + ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new SingleResourceResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value()));
         } catch (Exception ex) {
-            log.error("ERROR PUT WORKFLOW: " + ex.getMessage(), ex);
+            log.error("ERROR DELETE WORKFLOW: " + ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
         }

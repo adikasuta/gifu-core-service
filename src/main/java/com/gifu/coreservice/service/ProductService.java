@@ -10,6 +10,7 @@ import com.gifu.coreservice.repository.ProductRepository;
 import com.gifu.coreservice.repository.spec.BasicSpec;
 import com.gifu.coreservice.repository.spec.SearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -26,6 +27,9 @@ public class ProductService {
     private ProductRepository productRepository;
     @Autowired
     private ProductCategoryRepository productCategoryRepository;
+
+    @Value("${picture.path}")
+    private String pictureBasePath;
 
     public Page<ProductSearchDto> searchProduct(SearchProductRequest request, Pageable pageable) {
         Specification<Product> specAnd = Specification.where(null);

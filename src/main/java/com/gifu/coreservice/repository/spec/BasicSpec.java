@@ -56,6 +56,8 @@ public class BasicSpec<T> implements Specification<T> {
             case NOT_EQUALS:
                 return builder.notEqual(
                         root.get(criteria.getKey()), criteria.getValue().toString());
+            case IS_NULL:
+                return root.get(criteria.getKey()).isNull();
         }
         return null;
     }

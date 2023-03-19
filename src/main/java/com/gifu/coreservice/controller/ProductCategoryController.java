@@ -47,7 +47,9 @@ public class ProductCategoryController {
             ProductCategoryDto result = productCategoryService.updateProductCategory(request, null);
             return ResponseEntity.ok(new SingleResourceResponse<>(result));
         } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
         }
     }
 
@@ -57,7 +59,9 @@ public class ProductCategoryController {
             List<ProductCategoryDto> result = productCategoryService.getAllProductCategory();
             return ResponseEntity.ok(new SingleResourceResponse<>(result));
         } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
         }
     }
 
@@ -69,7 +73,9 @@ public class ProductCategoryController {
             productCategoryService.deleteProductCategory(id);
             return ResponseEntity.ok(new SingleResourceResponse<>("Delete Success"));
         } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
         }
     }
 }

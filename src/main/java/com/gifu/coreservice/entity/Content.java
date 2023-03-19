@@ -22,6 +22,8 @@ public class Content {
     private String name;
     @Column(name = "picture")
     private String picture;
+    @Column(name = "updated_by")
+    private String updatedBy;
 
     @Column(name = "created_date")
     private ZonedDateTime createdDate;

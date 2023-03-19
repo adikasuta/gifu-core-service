@@ -16,7 +16,9 @@ import com.gifu.coreservice.repository.*;
 import com.gifu.coreservice.repository.spec.BasicSpec;
 import com.gifu.coreservice.repository.spec.SearchCriteria;
 import com.gifu.coreservice.utils.SortUtils;
+import com.gifu.coreservice.utils.SpecUtils;
 import com.gifu.coreservice.utils.StringUtils;
+import org.hibernate.jdbc.Work;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -59,7 +61,7 @@ public class WorkflowService {
             throw new InvalidRequestException("No workflow to remove", null);
         }
         resetProductCategoryWorkflow(existing.get().getWorkflowCode());
-        existing.get().setIsDeleted(true);
+        existing.get().setDeleted(true);
         existing.get().setUpdatedDate(ZonedDateTime.now());
         existing.get().setUpdatedBy(deleterEmail);
         workflowRepository.save(existing.get());
@@ -141,7 +143,7 @@ public class WorkflowService {
         if (existing.isEmpty()) {
             throw new InvalidRequestException("No workflow to update", null);
         }
-        existing.get().setIsDeleted(true);
+        existing.get().setDeleted(true);
         existing.get().setUpdatedBy(updaterEmail);
         existing.get().setUpdatedDate(ZonedDateTime.now());
         workflowRepository.save(existing.get());
@@ -152,7 +154,7 @@ public class WorkflowService {
     @Transactional
     public WorkflowDto createWorkflow(SaveWorkflowRequest request, String workflowCode, String creatorEmail) {
         Workflow workflow = new Workflow();
-        workflow.setIsDeleted(false);
+        workflow.setDeleted(false);
         workflow.setWorkflowCode(workflowCode);
         workflow.setName(request.getName());
         workflow.setCreatedDate(ZonedDateTime.now());
@@ -244,6 +246,8 @@ public class WorkflowService {
                 .id(workflow.getId())
                 .workflowCode(workflow.getWorkflowCode())
                 .name(workflow.getName())
+                .products(Collections.emptyList())
+                .productCategories(Collections.emptyList())
                 .steps(stepDtos)
                 .build();
 
@@ -276,10 +280,13 @@ public class WorkflowService {
         if(!org.springframework.util.StringUtils.hasText(fieldName)){
             fieldName = "name";
         }
+
         BasicSpec<ProductCategory> like = new BasicSpec<>(new SearchCriteria(
                 fieldName, SearchOperation.LIKE, input.getQuery()
         ));
-        List<ProductCategory> productCategories = productCategoryRepository.findAll(Specification.where(like));
+        List<ProductCategory> productCategories = productCategoryRepository.findAll(Specification.where(like)
+                .and(new SpecUtils<ProductCategory
+                >().isNotTrue("isDeleted")));
 
         List<String> workflowCodes = productCategories.stream().map(ProductCategory::getWorkflowCode).collect(Collectors.toList());
         Page<Workflow> workflows = Page.empty(pageable);
@@ -287,10 +294,8 @@ public class WorkflowService {
             BasicSpec<Workflow> inWorkflowCodes = new BasicSpec<>(new SearchCriteria(
                     "workflowCode", SearchOperation.IN, workflowCodes
             ));
-            BasicSpec<Workflow> isNotDeletedWorkflow = new BasicSpec<>(new SearchCriteria(
-                    "isDeleted", SearchOperation.EQUALS, false
-            ));
-            workflows = workflowRepository.findAll(Specification.where(inWorkflowCodes).and(isNotDeletedWorkflow), pageable);
+            Specification<Workflow> notDeleted = new SpecUtils<Workflow>().isNotTrue("isDeleted");
+            workflows = workflowRepository.findAll(Specification.where(inWorkflowCodes).and(notDeleted), pageable);
         }
 
         return workflows.map(this::getDto);

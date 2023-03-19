@@ -18,6 +18,8 @@ public class Order {
     private Long orderCheckoutId;
     @Column(name = "order_code")
     private String orderCode;
+    @Column(name = "product_id")
+    private Long productId;
     @Column(name = "product_code")
     private String productCode;
     @Column(name = "product_type")
@@ -26,6 +28,8 @@ public class Order {
     private String status;
     @Column(name = "customer_id")
     private Long customerId;
+    @Column(name = "customer_name")
+    private String customerName;
     @Column(name = "customer_email")
     private String customerEmail;
     @Column(name = "customer_phone_no")
@@ -61,6 +65,8 @@ public class Order {
 
     @Column(name = "created_date")
     private ZonedDateTime createdDate;
+    @Column(name = "checkout_date")
+    private ZonedDateTime checkoutDate;
     @Column(name = "updated_date")
     private ZonedDateTime updatedDate;
     @Column(name = "updated_by")

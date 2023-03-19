@@ -37,7 +37,9 @@ public class ProductController {
             Page<ProductSearchDto> result = productService.searchProduct(request, pageable);
             return ResponseEntity.ok(new SingleResourceResponse<>(result));
         } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
         }
     }
 }

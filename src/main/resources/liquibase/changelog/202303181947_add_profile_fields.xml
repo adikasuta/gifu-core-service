@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.8.xsd">
+
+    <changeSet  author="suta"  id="202303181947">
+        <addColumn tableName="user_account">
+            <column name="username" type="VARCHAR(50)"/>
+            <column name="phone_number" type="VARCHAR(20)"/>
+            <column name="address" type="VARCHAR(255)"/>
+            <column name="gender" type="int"/>
+            <column name="birth_date" type="DATE"/>
+            <column name="picture" type="VARCHAR(255)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+        </addColumn>
+        <addUniqueConstraint tableName="user_account" columnNames="email, employee_code, username"/>
+
+        <renameColumn tableName="cs_referral" oldColumnName="updated_date" newColumnName="inactive_date"/>
+        <addUniqueConstraint tableName="cs_referral" columnNames="token"/>
+
+        <addColumn tableName="variant">
+            <column name="updated_by" type="VARCHAR(100)"/>
+        </addColumn>
+
+        <addColumn tableName="content">
+            <column name="updated_by" type="VARCHAR(100)"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

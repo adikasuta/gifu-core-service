@@ -4,6 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum CodePrefix {
+    VARIANT("VR"),
     WORKFLOW("WF"),
     PRODUCT_CATEGORY("PCAT");
     private final String prefix;
