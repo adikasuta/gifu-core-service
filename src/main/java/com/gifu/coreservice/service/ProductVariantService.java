@@ -3,11 +3,13 @@ package com.gifu.coreservice.service;
 import com.gifu.coreservice.entity.Content;
 import com.gifu.coreservice.entity.ProductVariant;
 import com.gifu.coreservice.entity.Variant;
+import com.gifu.coreservice.entity.VariantType;
 import com.gifu.coreservice.enumeration.CodePrefix;
 import com.gifu.coreservice.enumeration.SearchOperation;
-import com.gifu.coreservice.enumeration.VariantType;
+import com.gifu.coreservice.enumeration.VariantTypeEnum;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.SearchProductVariantDto;
+import com.gifu.coreservice.model.dto.ValueTextDto;
 import com.gifu.coreservice.model.request.SaveVariantContentRequest;
 import com.gifu.coreservice.model.request.SaveVariantRequest;
 import com.gifu.coreservice.model.request.SearchProductVariantRequest;
@@ -27,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -44,9 +47,19 @@ public class ProductVariantService {
     private ProductCategoryRepository productCategoryRepository;
     @Autowired
     private ProductVariantRepository productVariantRepository;
+    @Autowired
+    private VariantTypeRepository variantTypeRepository;
 
     @Value("${picture.path}")
     private String pictureBasePath;
+
+    public List<ValueTextDto> getVariantTypeReference() {
+        List<ValueTextDto> types = new ArrayList<>();
+        for(VariantTypeEnum item : VariantTypeEnum.values()){
+            types.add(new ValueTextDto(item.name(), item.getText(), item.getMeta()));
+        }
+        return types;
+    }
 
     public Page<SaveVariantContentRequest> findVariantContentsByVariantId(Long variantId, Pageable pageable) {
         Page<Content> contents = contentRepository.findPageByVariantId(variantId, pageable);
@@ -67,7 +80,7 @@ public class ProductVariantService {
         return SaveVariantRequest.builder()
                 .id(variant.getId())
                 .name(variant.getName())
-                .variantType(VariantType.valueOf(variant.getVariantTypeCode()))
+                .variantTypeCode(VariantTypeEnum.valueOf(variant.getVariantTypeCode()))
                 .allowedToBeSecondary(variant.getAllowedBeSecondary())
                 .existingPicturePath(variant.getPicture())
                 .build();
@@ -75,11 +88,11 @@ public class ProductVariantService {
 
     public Page<SearchProductVariantDto> searchProductVariants(SearchProductVariantRequest request, Pageable pageable) {
         BasicSpec<Variant> nameContains = new BasicSpec<>(new SearchCriteria("name", SearchOperation.LIKE, request.getQuery()));
-        BasicSpec<Variant> codeContains = new BasicSpec<>(new SearchCriteria("variant_code", SearchOperation.LIKE, request.getQuery()));
-        BasicSpec<Variant> typeContains = new BasicSpec<>(new SearchCriteria("variant_type_code", SearchOperation.LIKE, request.getQuery()));
+        BasicSpec<Variant> codeContains = new BasicSpec<>(new SearchCriteria("variantCode", SearchOperation.LIKE, request.getQuery()));
+        BasicSpec<Variant> typeContains = new BasicSpec<>(new SearchCriteria("variantTypeCode", SearchOperation.LIKE, request.getQuery()));
         Specification<Variant> where = Specification.where(nameContains).or(codeContains).or(typeContains);
         if (StringUtils.hasText(request.getVariantTypeCode())) {
-            BasicSpec<Variant> typeEquals = new BasicSpec<>(new SearchCriteria("variant_type_code", SearchOperation.EQUALS, request.getVariantTypeCode()));
+            BasicSpec<Variant> typeEquals = new BasicSpec<>(new SearchCriteria("variantTypeCode", SearchOperation.EQUALS, request.getVariantTypeCode()));
             where.and(typeEquals);
         }
         Page<Variant> pages = variantRepository.findAll(where, pageable);
@@ -110,18 +123,18 @@ public class ProductVariantService {
     @Transactional
     public boolean deleteVariant(Long variantId) {
         List<ProductVariant> productVariants = productVariantRepository.findByVariations(variantId);
-        for(ProductVariant it : productVariants){
-            if(variantId.equals(it.getVariantId())){
+        for (ProductVariant it : productVariants) {
+            if (variantId.equals(it.getVariantId())) {
                 productVariantRepository.delete(it);
                 continue;
             }
-            if(variantId.equals(it.getPairVariantId())){
+            if (variantId.equals(it.getPairVariantId())) {
                 it.setPairVariantId(null);
                 productVariantRepository.save(it);
                 continue;
             }
-            if(variantId.equals(it.getGreetingsVarianId())){
-                it.setGreetingsVarianId(null);
+            if (variantId.equals(it.getGreetingsVariantId())) {
+                it.setGreetingsVariantId(null);
                 productVariantRepository.save(it);
             }
         }
@@ -171,7 +184,7 @@ public class ProductVariantService {
             String filePath = fileUtils.storeFile(pictureFile, pictureBasePath);
             variant.setPicture(filePath);
         }
-        variant.setVariantTypeCode(request.getVariantType().name());
+        variant.setVariantTypeCode(request.getVariantTypeCode().name());
         variant.setAllowedBeSecondary(request.isAllowedToBeSecondary());
         variant.setUpdatedDate(ZonedDateTime.now());
         variant.setUpdatedBy(saveBy);

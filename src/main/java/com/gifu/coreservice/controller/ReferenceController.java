@@ -7,6 +7,7 @@ import com.gifu.coreservice.model.dto.ValueTextDto;
 import com.gifu.coreservice.model.request.SaveProductCategoryRequest;
 import com.gifu.coreservice.model.response.SingleResourceResponse;
 import com.gifu.coreservice.service.ProductCategoryService;
+import com.gifu.coreservice.service.ProductVariantService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,16 +24,20 @@ import java.util.Map;
 public class ReferenceController {
 
     @Autowired
-    private ProductCategoryService productCategoryService;
-    @Autowired
-    private ObjectMapper objectMapper;
+    private ProductVariantService productVariantService;
 
     @GetMapping("/product-type")
-    public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getProductCategory() {
+    public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getProductType() {
         List<ValueTextDto> productTypes = List.of(
                 new ValueTextDto(ProductType.INVITATION.name(), ProductType.INVITATION.getLabel()),
                 new ValueTextDto(ProductType.SOUVENIR.name(), ProductType.SOUVENIR.getLabel())
         );
         return ResponseEntity.ok(new SingleResourceResponse<>(productTypes));
+    }
+
+    @GetMapping("/variant-type")
+    public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getVariantType() {
+        List<ValueTextDto> variantTypes = productVariantService.getVariantTypeReference();
+        return ResponseEntity.ok(new SingleResourceResponse<>(variantTypes));
     }
 }

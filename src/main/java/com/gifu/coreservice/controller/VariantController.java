@@ -10,6 +10,7 @@ import com.gifu.coreservice.model.response.SingleResourceResponse;
 import com.gifu.coreservice.service.ObjectMapperService;
 import com.gifu.coreservice.service.ProductVariantService;
 import com.gifu.coreservice.utils.SessionUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @RestController
 @RequestMapping(path = "api/variant")
 public class VariantController {
@@ -31,7 +33,7 @@ public class VariantController {
     @GetMapping
     public ResponseEntity<SingleResourceResponse<Page<SearchProductVariantDto>>> getSearchVariants(
             @RequestParam String searchQuery,
-            @RequestParam String variantTypeCode,
+            @RequestParam(required = false) String variantTypeCode,
             Pageable pageable
     ) {
         try {
@@ -42,6 +44,7 @@ public class VariantController {
             Page<SearchProductVariantDto> result = productVariantService.searchProductVariants(request, pageable);
             return ResponseEntity.ok(new SingleResourceResponse<>(result));
         } catch (Exception ex) {
+            log.error(ex.getMessage(),ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
             );
@@ -99,11 +102,12 @@ public class VariantController {
     public ResponseEntity<SingleResourceResponse<String>> saveContent(
             @PathVariable Long id,
             @RequestPart("payload") String payload,
-            @RequestPart("file") MultipartFile file
+            @RequestPart(value = "file", required = false) MultipartFile file
     ) {
         try {
             User user = SessionUtils.getUserContext();
             SaveVariantContentRequest request = objectMapperService.readToObject(payload, SaveVariantContentRequest.class);
+            request.setVariantId(id);
             productVariantService.saveVariantContent(request, file, user.getEmail());
             return ResponseEntity.ok(new SingleResourceResponse<>("Save content success"));
         } catch (InvalidRequestException ex) {

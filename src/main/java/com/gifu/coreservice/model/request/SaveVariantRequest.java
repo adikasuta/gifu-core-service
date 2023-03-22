@@ -1,6 +1,6 @@
 package com.gifu.coreservice.model.request;
 
-import com.gifu.coreservice.enumeration.VariantType;
+import com.gifu.coreservice.enumeration.VariantTypeEnum;
 import lombok.Builder;
 import lombok.Data;
 
@@ -9,7 +9,7 @@ import lombok.Data;
 public class SaveVariantRequest {
     private Long id;
     private String name;
-    private VariantType variantType;
+    private VariantTypeEnum variantTypeCode;
     private boolean allowedToBeSecondary;
     private String existingPicturePath;
 }
