@@ -12,6 +12,9 @@ public class UserDto {
     private String generatedPassword;
     private String username;
     private String name;
+    private String roleName;
+    private boolean active;
+    private String picture;
     private String email;
     private String phoneNo;
     private String address;

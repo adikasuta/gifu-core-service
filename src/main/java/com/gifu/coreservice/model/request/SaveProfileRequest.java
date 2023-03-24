@@ -14,4 +14,5 @@ public class SaveProfileRequest {
     private String address;
     private Integer gender;
     private LocalDate birthDate;
+    private Long roleId;
 }

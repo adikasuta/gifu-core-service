@@ -170,19 +170,11 @@ public class OrderService {
         orderShipping.setPostalCode(shippingDetails.getPostalCode());
         orderShipping.setPreferredShippingVendor(shippingDetails.getPreferredShippingVendor());
         orderShipping.setUseWoodenCrate(shippingDetails.getUseWoodenCrate());
+        orderShipping.setProvinceCode(shippingDetails.getProvinceId());
+        orderShipping.setCityCode(shippingDetails.getCityId());
+        orderShipping.setDistrictCode(shippingDetails.getDistrctId());
+        orderShipping.setKelurahanCode(shippingDetails.getKelurahanId());
 
-        provinceRepository.findById(shippingDetails.getProvinceId()).ifPresent(
-                it -> orderShipping.setProvinceCode(it.getCode())
-        );
-        cityRepository.findById(shippingDetails.getCityId()).ifPresent(
-                it -> orderShipping.setCityCode(it.getCode())
-        );
-        districtRepository.findById(shippingDetails.getDistrctId()).ifPresent(
-                it -> orderShipping.setDistrictCode(it.getCode())
-        );
-        kelurahanRepository.findById(shippingDetails.getKelurahanId()).ifPresent(
-                it -> orderShipping.setKelurahanCode(it.getCode())
-        );
         orderShipping.setCreatedDate(ZonedDateTime.now());
         orderShipping.setUpdatedDate(ZonedDateTime.now());
         return orderShippingRepository.save(orderShipping);

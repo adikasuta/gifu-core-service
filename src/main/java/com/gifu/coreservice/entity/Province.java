@@ -2,22 +2,18 @@ package com.gifu.coreservice.entity;
 
 import lombok.Data;
 
-import javax.persistence.*;
-import java.time.ZonedDateTime;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Entity
-@Table(name = "province")
+@Table(name = "provinces")
 @Data
 public class Province {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private String id;
 
-    private String code;
-    @Column(name = "province_name")
-    private String provinceName;
-    @Column(name = "created_date")
-    private ZonedDateTime createdDate;
-    @Column(name = "updated_date")
-    private ZonedDateTime updatedDate;
+    @Column(name = "name")
+    private String name;
 }

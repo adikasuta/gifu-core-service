@@ -1,23 +1,17 @@
 package com.gifu.coreservice.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gifu.coreservice.enumeration.ProductType;
-import com.gifu.coreservice.model.dto.ProductCategoryDto;
 import com.gifu.coreservice.model.dto.ValueTextDto;
-import com.gifu.coreservice.model.request.SaveProductCategoryRequest;
 import com.gifu.coreservice.model.response.SingleResourceResponse;
-import com.gifu.coreservice.service.ProductCategoryService;
 import com.gifu.coreservice.service.ProductVariantService;
+import com.gifu.coreservice.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping(path = "api/ref")
@@ -25,6 +19,8 @@ public class ReferenceController {
 
     @Autowired
     private ProductVariantService productVariantService;
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/product-type")
     public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getProductType() {
@@ -39,5 +35,11 @@ public class ReferenceController {
     public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getVariantType() {
         List<ValueTextDto> variantTypes = productVariantService.getVariantTypeReference();
         return ResponseEntity.ok(new SingleResourceResponse<>(variantTypes));
+    }
+
+    @GetMapping("/roles")
+    public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getRoles() {
+        List<ValueTextDto> roles = userService.getRolesReference();
+        return ResponseEntity.ok(new SingleResourceResponse<>(roles));
     }
 }

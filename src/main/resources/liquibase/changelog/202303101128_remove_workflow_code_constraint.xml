@@ -3,9 +3,13 @@
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.8.xsd">
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
     <changeSet  author="suta"  id="202303101128">
+        <preConditions onFail="CONTINUE">
+            <uniqueConstraintExists constraintName="workflow_workflow_code_key"
+                                    tableName="workflow"/>
+        </preConditions>
         <dropUniqueConstraint tableName="workflow" uniqueColumns="workflow_code" constraintName="workflow_workflow_code_key"/>
     </changeSet>
 

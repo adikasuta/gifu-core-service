@@ -4,10 +4,10 @@ import lombok.Data;
 
 @Data
 public class ShippingDetailsDto {
-    private Long provinceId;
-    private Long cityId;
-    private Long distrctId;
-    private Long kelurahanId;
+    private String provinceId;
+    private String cityId;
+    private String distrctId;
+    private String kelurahanId;
     private String postalCode;
     private String address;
     private Long preferredShippingVendor;

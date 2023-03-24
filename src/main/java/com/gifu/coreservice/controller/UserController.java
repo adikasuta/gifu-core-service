@@ -4,12 +4,15 @@ import com.gifu.coreservice.entity.User;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.UserDto;
 import com.gifu.coreservice.model.request.SaveProfileRequest;
+import com.gifu.coreservice.model.request.SearchUserRequest;
 import com.gifu.coreservice.model.response.SingleResourceResponse;
 import com.gifu.coreservice.service.ObjectMapperService;
 import com.gifu.coreservice.service.UserService;
 import com.gifu.coreservice.utils.SessionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,6 +31,26 @@ public class UserController {
     @Autowired
     private ObjectMapperService objectMapperService;
 
+    @GetMapping
+    public ResponseEntity<SingleResourceResponse<Page<UserDto>>> searchUsers(
+            @RequestParam String searchQuery,
+            @RequestParam(required = false) Long roleId,
+            Pageable pageable
+    ) {
+        try {
+            SearchUserRequest request = SearchUserRequest.builder()
+                    .searchQuery(searchQuery)
+                    .roleId(roleId)
+                    .build();
+            Page<UserDto> result = userService.searchUser(request, pageable);
+            return ResponseEntity.ok(new SingleResourceResponse<>(result));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
+        }
+    }
+
     @PostMapping(value = "/{userId}/cs-referral")
     public ResponseEntity<SingleResourceResponse<String>> postUser(
             @PathVariable("userId") Long userId
@@ -42,7 +65,7 @@ public class UserController {
         }
     }
 
-    @PostMapping(value = "/", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<SingleResourceResponse<UserDto>> postUser(
             @RequestPart("payload") String payload,
             @RequestPart("file") MultipartFile file

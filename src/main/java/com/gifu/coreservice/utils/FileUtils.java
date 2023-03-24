@@ -1,6 +1,7 @@
 package com.gifu.coreservice.utils;
 
 import liquibase.util.file.FilenameUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -29,10 +30,22 @@ public class FileUtils {
         }
     }
 
+    public static String getFileExtension(String filename) {
+        if(StringUtils.hasText(filename)){
+            return "";
+        }
+        int dotIndex = filename.lastIndexOf(".");
+        if (dotIndex > 0) {
+            return filename.substring(dotIndex + 1);
+        } else {
+            return "";
+        }
+    }
+
 
     public String storeFile(MultipartFile multipartFile, String systemPath) throws IOException {
         createDirectoryIfNotExists(systemPath);
-        String extension = FilenameUtils.getExtension(multipartFile.getOriginalFilename());
+        String extension = getFileExtension(multipartFile.getOriginalFilename());
         String newFileName = System.currentTimeMillis() + "." + extension;
         String filePath = systemPath + File.separator + newFileName;
         File path = new File(filePath);

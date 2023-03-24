@@ -3,23 +3,15 @@ package com.gifu.coreservice.entity;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.time.ZonedDateTime;
 
 @Entity
-@Table(name = "district")
+@Table(name = "districts")
 @Data
 public class District {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private String id;
 
-    private String code;
-    @Column(name = "city_id")
-    private Long cityId;
-    @Column(name = "district_name")
-    private String districtName;
-    @Column(name = "created_date")
-    private ZonedDateTime createdDate;
-    @Column(name = "updated_date")
-    private ZonedDateTime updatedDate;
+    private String name;
+    @Column(name = "regency_id")
+    private String cityId;
 }
