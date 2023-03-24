@@ -6,7 +6,8 @@ import lombok.Getter;
 public enum CodePrefix {
     VARIANT("VR"),
     WORKFLOW("WF"),
-    PRODUCT_CATEGORY("PCAT");
+    PRODUCT_CATEGORY("PCAT"),
+    PRODUCT("PD");
     private final String prefix;
     CodePrefix(String prefix){
         this.prefix = prefix;

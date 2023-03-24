@@ -17,10 +17,10 @@ public class ProductVariant {
     private Long productId;
     @Column(name = "variant_id")
     private Long variantId;
-    @Column(name = "pair_variant_id")
-    private Long pairVariantId;
-    @Column(name = "greetings_variant_id")
-    private Long greetingsVariantId;
+    @Column(name = "first_subvariant_id")
+    private Long firstSubvariantId;
+    @Column(name = "second_subvariant_id")
+    private Long secondSubvariantId;
     @Column(name = "price")
     private BigDecimal price;
 }

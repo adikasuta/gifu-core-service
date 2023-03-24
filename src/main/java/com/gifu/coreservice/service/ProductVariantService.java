@@ -3,7 +3,6 @@ package com.gifu.coreservice.service;
 import com.gifu.coreservice.entity.Content;
 import com.gifu.coreservice.entity.ProductVariant;
 import com.gifu.coreservice.entity.Variant;
-import com.gifu.coreservice.entity.VariantType;
 import com.gifu.coreservice.enumeration.CodePrefix;
 import com.gifu.coreservice.enumeration.SearchOperation;
 import com.gifu.coreservice.enumeration.VariantTypeEnum;
@@ -128,13 +127,13 @@ public class ProductVariantService {
                 productVariantRepository.delete(it);
                 continue;
             }
-            if (variantId.equals(it.getPairVariantId())) {
-                it.setPairVariantId(null);
+            if (variantId.equals(it.getFirstSubvariantId())) {
+                it.setFirstSubvariantId(null);
                 productVariantRepository.save(it);
                 continue;
             }
-            if (variantId.equals(it.getGreetingsVariantId())) {
-                it.setGreetingsVariantId(null);
+            if (variantId.equals(it.getSecondSubvariantId())) {
+                it.setSecondSubvariantId(null);
                 productVariantRepository.save(it);
             }
         }

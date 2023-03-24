@@ -59,4 +59,8 @@ public class Product {
     private ZonedDateTime createdDate;
     @Column(name = "updated_date")
     private ZonedDateTime updatedDate;
+    @Column(name = "created_by")
+    private String createdBy;
+    @Column(name = "updated_by")
+    private String updatedBy;
 }
