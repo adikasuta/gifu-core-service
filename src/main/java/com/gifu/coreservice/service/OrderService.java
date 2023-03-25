@@ -99,7 +99,6 @@ public class OrderService {
         });
     }
 
-    //TODO: recalculate order checkout payment
     private OrderCheckout syncOrderCheckout(Long orderCheckoutId, String updaterEmail) throws InvalidRequestException {
         Optional<OrderCheckout> checkoutOpt = orderCheckoutRepository.findById(orderCheckoutId);
         if(checkoutOpt.isEmpty()){

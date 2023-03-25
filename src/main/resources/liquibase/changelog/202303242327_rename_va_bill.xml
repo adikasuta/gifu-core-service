@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet  author="suta"  id="202303242327">
+        <renameTable oldTableName="va_bill" newTableName="bill"/>
+        <renameColumn tableName="bill" oldColumnName="order_checkout_id" newColumnName="order_checkout_payment_id"/>
+        <addColumn tableName="bill">
+            <column name="bill_payment_id" type="bigint"/>
+            <column name="payment_partner" type="VARCHAR(100)"/>
+            <column name="status" type="VARCHAR(100)"/>
+            <column name="customer_name" type="VARCHAR(100)"/>
+        </addColumn>
+        <dropColumn tableName="bill" columnName="va_number"/>
+        <dropColumn tableName="bill" columnName="bank_name"/>
+
+        <createTable tableName="xendit_closed_va">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="xendit_id" type="VARCHAR(255)"/>
+            <column name="external_id" type="VARCHAR(255)"/>
+            <column name="bank_code" type="VARCHAR(50)"/>
+            <column name="va_number" type="VARCHAR(100)"/>
+            <column name="name" type="VARCHAR(255)"/>
+            <column name="expected_amount" type="decimal(19,2)"/>
+            <column name="expiration_date" type="TIMESTAMP"/>
+            <column name="status" type="VARCHAR(50)"/>
+            <column name="bill_id" type="bigint"/>
+            <column name="created_date" type="TIMESTAMP"/>
+            <column name="response_date" type="TIMESTAMP"/>
+            <column name="request_payload" type="TEXT"/>
+            <column name="response_payload" type="TEXT"/>
+            <column name="callback_date" type="TIMESTAMP"/>
+            <column name="callback_payload" type="TEXT"/>
+        </createTable>
+
+        <createTable tableName="xendit_va_payment">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="xendit_id" type="VARCHAR(255)"/>
+            <column name="va_xendit_id" type="VARCHAR(255)"/>
+            <column name="va_external_id" type="VARCHAR(255)"/>
+
+            <column name="bank_code" type="VARCHAR(50)"/>
+            <column name="va_number" type="VARCHAR(100)"/>
+            <column name="transaction_date" type="TIMESTAMP"/>
+            <column name="amount" type="decimal(19,2)"/>
+
+            <column name="bill_id" type="bigint"/>
+            <column name="callback_date" type="TIMESTAMP"/>
+            <column name="callback_payload" type="TEXT"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

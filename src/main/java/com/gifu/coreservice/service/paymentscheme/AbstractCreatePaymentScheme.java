@@ -1,4 +1,4 @@
-package com.gifu.coreservice.service.ordertransaction;
+package com.gifu.coreservice.service.paymentscheme;
 
 import com.gifu.coreservice.entity.OrderCheckout;
 import com.gifu.coreservice.entity.OrderCheckoutPayment;

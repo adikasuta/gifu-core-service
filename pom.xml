@@ -132,6 +132,13 @@
       <artifactId>thymeleaf-spring5</artifactId>
       <version>3.0.12.RELEASE</version>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/com.xendit/xendit-java-lib -->
+    <dependency>
+      <groupId>com.xendit</groupId>
+      <artifactId>xendit-java-lib</artifactId>
+      <version>1.22.0</version>
+    </dependency>
+
   </dependencies>
 
   <build>

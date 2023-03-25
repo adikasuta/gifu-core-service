@@ -14,9 +14,9 @@ import java.util.Optional;
 public interface PricingRangeRepository extends JpaRepository<PricingRange, Long> {
     List<PricingRange> findByProductId(Long productId);
 
-    @Query("FROM PricingRange where productId = :productId and qtyMax IS NULL LIMIT 1")
+    @Query("FROM PricingRange where productId = :productId and qtyMax IS NULL")//TODO: LIMIT 1
     Optional<PricingRange> findByProductIdAndQtyMaxIsNull(Long productId);
 
-    @Query("FROM PricingRange where productId = :productId ORDER BY qtyMax DESC LIMIT 1")
+    @Query("FROM PricingRange where productId = :productId")//TODO: ORDER BY qtyMax DESC LIMIT 1
     Optional<PricingRange> findByProductIdAndHighestQty(Long productId);
 }

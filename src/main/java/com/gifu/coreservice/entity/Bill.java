@@ -7,27 +7,31 @@ import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 
 @Entity
-@Table(name = "va_bill")
+@Table(name = "bill")
 @Data
-public class VaBill {
+public class Bill {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
-    @Column(name = "order_checkout_id")
-    private Long orderCheckoutId;
+    @Column(name = "order_checkout_payment_id")
+    private Long orderCheckoutPaymentId;
 
-    @Column(name = "va_number")
-    private String vaNumber;
     @Column(name = "amount")
     private BigDecimal amount;
     @Column(name = "customer_id")
     private Long customerId;
     @Column(name = "customer_email")
     private String customerEmail;
+    @Column(name = "customer_name")
+    private String customerName;
     @Column(name = "payment_date")
     private ZonedDateTime paymentDate;
-    @Column(name = "bank_name")
-    private String bankName;
+    @Column(name = "bill_payment_id")
+    private Long billPaymentId;
+    @Column(name = "payment_partner")
+    private String paymentPartner;
+    @Column(name="status")
+    private String status;
 
     @Column(name = "created_date")
     private ZonedDateTime createdDate;

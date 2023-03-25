@@ -3,21 +3,20 @@ package com.gifu.coreservice.service;
 import com.gifu.coreservice.entity.Order;
 import com.gifu.coreservice.entity.OrderCheckout;
 import com.gifu.coreservice.entity.OrderCheckoutPayment;
-import com.gifu.coreservice.entity.VaBill;
-import com.gifu.coreservice.enumeration.OrderStatus;
-import com.gifu.coreservice.enumeration.PaymentTerm;
-import com.gifu.coreservice.enumeration.SystemConst;
+import com.gifu.coreservice.entity.Bill;
+import com.gifu.coreservice.enumeration.*;
 import com.gifu.coreservice.exception.InvalidRequestException;
+import com.gifu.coreservice.exception.ObjectToJsonStringException;
 import com.gifu.coreservice.model.request.ChangeStatusRequest;
 import com.gifu.coreservice.model.request.CreateVaBillPaymentRequest;
 import com.gifu.coreservice.model.request.OrderCheckoutRequest;
 import com.gifu.coreservice.repository.OrderCheckoutPaymentRepository;
 import com.gifu.coreservice.repository.OrderCheckoutRepository;
 import com.gifu.coreservice.repository.OrderRepository;
-import com.gifu.coreservice.repository.VaBillRepository;
-import com.gifu.coreservice.service.ordertransaction.AbstractCreatePaymentScheme;
-import com.gifu.coreservice.service.ordertransaction.CashPaymentSchemeService;
-import com.gifu.coreservice.service.ordertransaction.DownPaymentSchemeService;
+import com.gifu.coreservice.repository.BillRepository;
+import com.gifu.coreservice.service.paymentscheme.AbstractCreatePaymentScheme;
+import com.gifu.coreservice.service.paymentscheme.CashPaymentSchemeService;
+import com.gifu.coreservice.service.paymentscheme.DownPaymentSchemeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -44,7 +43,7 @@ public class OrderPaymentService {
     @Autowired
     private DownPaymentSchemeService downPaymentSchemeService;
     @Autowired
-    private VaBillRepository vaBillRepository;
+    private BillRepository billRepository;
     @Autowired
     private XenditService xenditService;
 
@@ -96,28 +95,23 @@ public class OrderPaymentService {
         return orderCheckout;
     }
 
-    private String generateVaNumber(){
-        //TODO:
-        return null;
-    }
-
-    //TODO: list checkout order payment
-    public VaBill createVaBillPayment(CreateVaBillPaymentRequest request) throws InvalidRequestException {
+    public Bill createVaBillPayment(CreateVaBillPaymentRequest request) throws InvalidRequestException, ObjectToJsonStringException {
         Optional<OrderCheckoutPayment> orderCheckoutPaymentOpt = orderCheckoutPaymentRepository.findByOrderCheckoutIdAndSequenceNo(request.getOrderCheckoutId(), request.getSequenceNo());
         if(orderCheckoutPaymentOpt.isEmpty()){
             throw new InvalidRequestException("Order Checkout is not existed", null);
         }
         OrderCheckoutPayment orderCheckoutPayment = orderCheckoutPaymentOpt.get();
-        VaBill vaBill = new VaBill();
-        vaBill.setOrderCheckoutId(orderCheckoutPayment.getOrderCheckoutId());
-        vaBill.setVaNumber(generateVaNumber());
-        vaBill.setAmount(orderCheckoutPayment.getAmount());
-        vaBill.setCreatedDate(ZonedDateTime.now());
-        vaBill.setExpiryDate(ZonedDateTime.now().plusDays(1));
-        vaBill.setRemarks(DEFAULT_REMARKS+request.getSequenceNo());
-        vaBill.setCreatedBy(request.getCreatedBy());
-        vaBillRepository.save(vaBill);
-        xenditService.createVaClose();
+        Bill bill = new Bill();
+        bill.setOrderCheckoutPaymentId(orderCheckoutPayment.getId());
+        bill.setAmount(orderCheckoutPayment.getAmount());
+        bill.setCreatedDate(ZonedDateTime.now());
+        bill.setExpiryDate(ZonedDateTime.now().plusDays(1));
+        bill.setRemarks(DEFAULT_REMARKS+request.getSequenceNo());
+        bill.setStatus(BillStatus.PENDING.name());
+        bill.setCreatedBy(request.getCreatedBy());
+        bill.setPaymentPartner(PaymentPartner.XENDIT.name());//possible to change/add another payment partner in future
+        billRepository.save(bill);
+        xenditService.createVaClose(bill);//possible to change/add another payment partner in future
         if(request.getSequenceNo() == 1){
             List<Order> orders = orderRepository.findByOrderCheckoutId(orderCheckoutPayment.getOrderCheckoutId());
             for(Order order : orders){
@@ -128,7 +122,7 @@ public class OrderPaymentService {
                         .build());
             }
         }
-        return vaBill;
+        return bill;
     }
 
 }

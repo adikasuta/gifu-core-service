@@ -19,4 +19,13 @@ public class StringUtils {
         }
         return sb.toString();
     }
+
+    public static String generateRandomNumericString(int length) {
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(random.nextInt(10));
+        }
+        return sb.toString();
+    }
 }

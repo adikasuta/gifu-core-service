@@ -1,4 +1,4 @@
-package com.gifu.coreservice.service.ordertransaction;
+package com.gifu.coreservice.service.paymentscheme;
 
 import com.gifu.coreservice.entity.OrderCheckout;
 import com.gifu.coreservice.entity.OrderCheckoutPayment;
@@ -6,7 +6,6 @@ import com.gifu.coreservice.repository.OrderCheckoutPaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Service
