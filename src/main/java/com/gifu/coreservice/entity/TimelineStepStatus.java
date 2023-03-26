@@ -13,8 +13,8 @@ public class TimelineStepStatus {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(name = "step_timeline_detail_id")
-    private Long stepTimelineDetailId;
+    @Column(name = "timeline_step_id")
+    private Long timelineStepId;
     @Column(name = "status_id")
     private Long statusId;
 

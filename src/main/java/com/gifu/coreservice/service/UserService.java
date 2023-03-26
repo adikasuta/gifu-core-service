@@ -1,8 +1,10 @@
 package com.gifu.coreservice.service;
 
 import com.gifu.coreservice.entity.CsReferral;
+import com.gifu.coreservice.entity.Permission;
 import com.gifu.coreservice.entity.Role;
 import com.gifu.coreservice.entity.User;
+import com.gifu.coreservice.enumeration.PermissionEnum;
 import com.gifu.coreservice.enumeration.SearchOperation;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.UserDto;
@@ -23,14 +25,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.util.Pair;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,6 +52,20 @@ public class UserService {
     public List<ValueTextDto> getRolesReference() {
         List<Role> roles = roleRepository.findAll();
         return roles.stream().map(it -> new ValueTextDto(String.valueOf(it.getId()), it.getName())).collect(Collectors.toList());
+    }
+
+    public boolean hasPermission(PermissionEnum permission, Long userId){
+        Optional<User> userOpt = userRepository.findById(userId);
+        if(userOpt.isPresent()){
+            User user = userOpt.get();
+            Collection<? extends GrantedAuthority> permissions = user.getAuthorities();
+            for (GrantedAuthority it : permissions){
+                if (permission.name().equals(it.getAuthority())){
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public Page<UserDto> searchUser(SearchUserRequest request, Pageable pageable) {

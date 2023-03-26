@@ -17,6 +17,8 @@ public class Timeline {
     private Long orderId;
     @Column(name = "workflow_id")
     private Long workflowId;
+    @Column(name = "is_done")
+    private boolean isDone;
 
     @Column(name = "created_date")
     private ZonedDateTime createdDate;

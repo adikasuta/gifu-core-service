@@ -14,8 +14,8 @@ import java.util.List;
 @Table(name = "workflow")
 @Data
 @SQLDelete(sql = "UPDATE workflow SET is_deleted = true WHERE id=?")
-@FilterDef(name = "deletedWorkflowFilter", parameters = @ParamDef(name = "isDeleted", type = "boolean"))
-@Filter(name = "deletedWorkflowFilter", condition = "is_deleted = :isDeleted")
+//@FilterDef(name = "deletedWorkflowFilter", parameters = @ParamDef(name = "isDeleted", type = "boolean"))
+//@Filter(name = "deletedWorkflowFilter", condition = "is_deleted = :isDeleted")
 public class Workflow {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

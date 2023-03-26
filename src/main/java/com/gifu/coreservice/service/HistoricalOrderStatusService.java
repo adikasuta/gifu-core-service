@@ -29,6 +29,7 @@ public class HistoricalOrderStatusService {
         order.setStatus(request.getStatus());
         order.setUpdatedDate(ZonedDateTime.now());
         order.setUpdatedBy(request.getUpdaterEmail());
+        orderRepository.save(order);
         HistoricalOrderStatus historicalOrderStatus = new HistoricalOrderStatus();
         historicalOrderStatus.setOrderId(order.getId());
         historicalOrderStatus.setStatus(request.getStatus());

@@ -3,12 +3,8 @@ package com.gifu.coreservice.service;
 import com.gifu.coreservice.entity.*;
 import com.gifu.coreservice.enumeration.OrderStatus;
 import com.gifu.coreservice.enumeration.SearchOperation;
-import com.gifu.coreservice.enumeration.SystemConst;
 import com.gifu.coreservice.exception.InvalidRequestException;
-import com.gifu.coreservice.model.dto.CustomerDetailsDto;
-import com.gifu.coreservice.model.dto.DashboardOrderDto;
-import com.gifu.coreservice.model.dto.InvoiceSouvenirDto;
-import com.gifu.coreservice.model.dto.ShippingDetailsDto;
+import com.gifu.coreservice.model.dto.*;
 import com.gifu.coreservice.model.request.ChangeStatusRequest;
 import com.gifu.coreservice.model.request.ConfirmOrderRequest;
 import com.gifu.coreservice.model.request.OrderSouvenirRequest;
@@ -22,11 +18,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -69,9 +65,43 @@ public class OrderService {
     @Autowired
     private HistoricalOrderStatusService historicalOrderStatusService;
 
-    public Page<DashboardOrderDto> getDashboardOrderPage(SearchDashboardOrderRequest request, Pageable pageable){
+    public OrderDto getOrderDtoById(Long orderId) {
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (orderOpt.isPresent()) {
+            Order order = orderOpt.get();
+            List<OrderVariant> orderVariants = orderVariantRepository.findByOrderId(orderId);
+            List<OrderVariantInfoDto> orderVariantDtos = orderVariants.stream().map(it -> {
+                List<OrderVariantInfo> additionalInfos = orderVariantInfoRepository.findByOrderVariantId(it.getId());
+                List<KeyValueDto> mappedAdditionalInfo = additionalInfos.stream().map(variantInfo ->
+                        KeyValueDto.builder().key(variantInfo.getKey())
+                                .value(variantInfo.getValue()).build()
+                ).collect(Collectors.toList());
+                return OrderVariantInfoDto.builder()
+                        .id(it.getId())
+                        .variantTypeCode(it.getVariantTypeCode())
+                        .variantCode(it.getVariantCode())
+                        .variantName(it.getVariantName())
+                        .variantContentCode(it.getVariantContentCode())
+                        .variantContentName(it.getVariantContentName())
+                        .variantContentPicture(it.getVariantContentPicture())
+                        .additionalInfo(mappedAdditionalInfo)
+                        .build();
+            }).collect(Collectors.toList());
+            return OrderDto.builder()
+                    .id(orderId)
+                    .productName(order.getProductName())
+                    .deadline(order.getDeadline())
+                    .quantity(order.getQuantity())
+                    .notes(order.getNotes())
+                    .variantInfo(orderVariantDtos)
+                    .build();
+        }
+        return null;
+    }
+
+    public Page<DashboardOrderDto> getDashboardOrderPage(SearchDashboardOrderRequest request, Pageable pageable) {
         BasicSpec<Order> productType = new BasicSpec<>(
-                new SearchCriteria("productType", SearchOperation.EQUALS,request.getProductType())
+                new SearchCriteria("productType", SearchOperation.EQUALS, request.getProductType())
         );
         BasicSpec<Order> periodFrom = new BasicSpec<>(
                 new SearchCriteria("checkoutDate", SearchOperation.GREATER_THAN_EQUALS, request.getPeriodFrom())
@@ -101,12 +131,12 @@ public class OrderService {
 
     private OrderCheckout syncOrderCheckout(Long orderCheckoutId, String updaterEmail) throws InvalidRequestException {
         Optional<OrderCheckout> checkoutOpt = orderCheckoutRepository.findById(orderCheckoutId);
-        if(checkoutOpt.isEmpty()){
+        if (checkoutOpt.isEmpty()) {
             throw new InvalidRequestException("Order checkout is not existed", null);
         }
         List<Order> orders = orderRepository.findByOrderCheckoutId(orderCheckoutId);
         BigDecimal grandTotal = BigDecimal.ZERO;
-        for(Order it : orders){
+        for (Order it : orders) {
             grandTotal = grandTotal.add(it.getGrandTotal());
         }
         OrderCheckout orderCheckout = checkoutOpt.get();
@@ -116,13 +146,14 @@ public class OrderService {
         return orderCheckoutRepository.save(orderCheckout);
     }
 
+    //TODO: write code to show to be confirm list
     public Order confirmOrder(ConfirmOrderRequest request) throws InvalidRequestException {
         Optional<Order> orderOpt = orderRepository.findById(request.getOrderId());
-        if(orderOpt.isEmpty()){
+        if (orderOpt.isEmpty()) {
             throw new InvalidRequestException("Order is not existed", null);
         }
         Order order = orderOpt.get();
-        if(OrderStatus.WAITING_FOR_CONFIRMATION.name().equals(order.getStatus())){
+        if (OrderStatus.WAITING_FOR_CONFIRMATION.name().equals(order.getStatus())) {
             throw new InvalidRequestException("Order cannot be confirmed", null);
         }
         order.setShippingFee(request.getShippingFee());
@@ -142,6 +173,7 @@ public class OrderService {
         return order;
     }
 
+    //TODO: generate order code
     private String generateOrderCode(OrderSouvenirRequest request) {
         return "";
     }

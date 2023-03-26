@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class ProductVariantService {
+    //TODO: check is_deleted = false before selecting
 
     @Autowired
     private ProductRepository productRepository;
@@ -153,6 +154,7 @@ public class ProductVariantService {
         } else {
             content.setCreatedDate(ZonedDateTime.now());
         }
+
         content.setVariantId(request.getVariantId());
         content.setName(request.getName());
         FileUtils fileUtils = new FileUtils();

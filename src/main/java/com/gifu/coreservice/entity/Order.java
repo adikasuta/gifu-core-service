@@ -20,6 +20,8 @@ public class Order {
     private String orderCode;
     @Column(name = "product_id")
     private Long productId;
+    @Column(name = "product_name")
+    private String productName;
     @Column(name = "product_code")
     private String productCode;
     @Column(name = "product_type")
@@ -71,4 +73,7 @@ public class Order {
     private ZonedDateTime updatedDate;
     @Column(name = "updated_by")
     private String updatedBy;
+
+    @Column(name="workflow_id")
+    private Long workflowId;
 }

@@ -8,6 +8,7 @@ import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -61,6 +62,10 @@ public class User implements UserDetails {
     @JoinColumn(name = "user_id")
     private Set<CsReferral> csReferral;
 
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "role_id")
+//    private Role role;
+
     @ManyToMany(cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_permission",
@@ -71,7 +76,12 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return permissions;
+        Set<Permission> combinedPermissions = new HashSet<>();
+//        if(this.getRole()!=null){
+//            combinedPermissions.addAll(this.getRole().getPermissions());
+//        }
+        combinedPermissions.addAll(this.permissions);
+        return combinedPermissions;
     }
 
     @Override

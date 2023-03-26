@@ -62,6 +62,7 @@ public class OrderPaymentService {
         return paymentSchemeCreator.createPaymentScheme(orderCheckout);
     }
 
+    //TODO: create get cart item service
     public OrderCheckout orderCheckout(OrderCheckoutRequest request) throws InvalidRequestException {
         OrderCheckout orderCheckout = new OrderCheckout();
         orderCheckout.setGrandTotal(BigDecimal.ZERO);
@@ -95,6 +96,7 @@ public class OrderPaymentService {
         return orderCheckout;
     }
 
+    //TODO: write code to show to be created bill list
     public Bill createVaBillPayment(CreateVaBillPaymentRequest request) throws InvalidRequestException, ObjectToJsonStringException {
         Optional<OrderCheckoutPayment> orderCheckoutPaymentOpt = orderCheckoutPaymentRepository.findByOrderCheckoutIdAndSequenceNo(request.getOrderCheckoutId(), request.getSequenceNo());
         if(orderCheckoutPaymentOpt.isEmpty()){

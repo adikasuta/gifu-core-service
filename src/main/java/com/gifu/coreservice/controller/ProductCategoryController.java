@@ -19,12 +19,6 @@ public class ProductCategoryController {
     @Autowired
     private ProductCategoryService productCategoryService;
 
-    //TODO: in case need to upload picture
-//    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-//    public ResponseEntity<SingleResourceResponse<ProductCategoryDto>> postProductCategory(
-//            @RequestPart("payload") String payload,
-//            @RequestPart("file") MultipartFile file
-//    )
     @PostMapping
     public ResponseEntity<SingleResourceResponse<ProductCategoryDto>> postProductCategory(
             @RequestBody SaveProductCategoryRequest request

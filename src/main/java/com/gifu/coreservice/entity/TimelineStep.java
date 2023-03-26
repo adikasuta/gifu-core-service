@@ -13,6 +13,8 @@ public class TimelineStep {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(name="step_name")
+    private String stepName;
     @Column(name = "timeline_id")
     private Long timelineId;
     @Column(name = "assignee_user_id")

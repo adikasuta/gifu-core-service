@@ -3,6 +3,7 @@ package com.gifu.coreservice.entity;
 import lombok.Data;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.SQLDelete;
 
 import javax.persistence.*;
 import java.time.ZonedDateTime;
@@ -11,6 +12,7 @@ import java.util.Set;
 @Entity
 @Table(name = "content")
 @Data
+@SQLDelete(sql = "UPDATE variant SET is_deleted = true WHERE id=?")
 public class Content {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,4 +31,7 @@ public class Content {
     private ZonedDateTime createdDate;
     @Column(name = "updated_date")
     private ZonedDateTime updatedDate;
+
+    @Column(name = "is_deleted")
+    private boolean isDeleted = Boolean.FALSE;
 }
