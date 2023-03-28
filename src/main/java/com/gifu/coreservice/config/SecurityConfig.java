@@ -76,6 +76,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/auth/api/logout").permitAll()
                 .antMatchers("/auth/api/change-password").authenticated()
                 .antMatchers("/api/**").authenticated()
+                .antMatchers("/hello").permitAll()
                 //example with http method:
 //                .antMatchers(HttpMethod.GET, "/api/author/**").permitAll()
                 // Our private endpoints
