@@ -32,8 +32,8 @@ public class ProductCategoryService {
     private String pictureBasePath;
 
     public List<ProductCategoryDto> getAllProductCategory() {
-//        Specification<ProductCategory> notDeleted = new SpecUtils<ProductCategory>().isNotTrue("isDeleted");
-        List<ProductCategory> productCategories = productCategoryRepository.findAll();
+        Specification<ProductCategory> notDeleted = new SpecUtils<ProductCategory>().isNotTrue("isDeleted");
+        List<ProductCategory> productCategories = productCategoryRepository.findAll(notDeleted);
         return productCategories.stream().map(productCategory ->
                 ProductCategoryDto.builder()
                         .id(productCategory.getId())

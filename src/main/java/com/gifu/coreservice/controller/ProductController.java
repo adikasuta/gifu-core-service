@@ -2,19 +2,20 @@ package com.gifu.coreservice.controller;
 
 import com.gifu.coreservice.entity.User;
 import com.gifu.coreservice.exception.InvalidRequestException;
+import com.gifu.coreservice.model.dto.ProductSearchDto;
 import com.gifu.coreservice.model.request.SaveProductRequest;
+import com.gifu.coreservice.model.request.SearchProductRequest;
 import com.gifu.coreservice.model.response.SingleResourceResponse;
 import com.gifu.coreservice.service.ObjectMapperService;
 import com.gifu.coreservice.service.ProductService;
 import com.gifu.coreservice.utils.SessionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController

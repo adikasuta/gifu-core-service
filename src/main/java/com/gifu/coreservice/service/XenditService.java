@@ -20,6 +20,7 @@ import com.xendit.exception.XenditException;
 import com.xendit.model.FixedVirtualAccount;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -53,6 +54,8 @@ public class XenditService {
     private ObjectMapperService objectMapperService;
     @Autowired
     private BillRepository billRepository;
+    @Autowired
+    private XenditApiService xenditApiService;
 
     private Map<BankCode, MerchantConfig> getMerchantConfigMapper() {
         Map<BankCode, MerchantConfig> map = new HashMap<>();
@@ -164,7 +167,8 @@ public class XenditService {
             xenditClosedVa.setResponseDate(ZonedDateTime.now());
             xenditClosedVa.setResponsePayload(objectMapperService.writeToString(virtualAccount));
             xenditClosedVaRepository.save(xenditClosedVa);
-        } catch (XenditException e) {
+        }
+        catch (XenditException e) {
             String message = Optional.ofNullable(e.getMessage()).orElse("-");
             log.error("Got XenditException when requestGenerateVa, externalId=" + xenditClosedVa.getExternalId() + "; message=" + message + "; code=" + e.getErrorCode(), e);
             Map<String, String> errorResponse = new HashMap<>();
@@ -173,7 +177,8 @@ public class XenditService {
             xenditClosedVa.setResponseDate(ZonedDateTime.now());
             xenditClosedVa.setResponsePayload(objectMapperService.writeToString(errorResponse));
             xenditClosedVaRepository.save(xenditClosedVa);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             String message = Optional.ofNullable(e.getMessage()).orElse("-");
             log.error("Got Exception when requestGenerateVa, externalId=" + xenditClosedVa.getExternalId() + "; message=" + message, e);
             Map<String, String> errorResponse = new HashMap<>();

@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class SearchWorkflowInput {
-    private String fieldName;
+    private Long productCategoryId;
     private String query;
 }

@@ -29,10 +29,10 @@ public class WorkflowController {
 
     @GetMapping
     public ResponseEntity<SingleResourceResponse<Page<WorkflowDto>>> searchWorkflow
-            (@RequestParam String fieldName, @RequestParam String query, Pageable page) {
+            (@RequestParam(required = false) Long productCategoryId, @RequestParam(required = false) String query, Pageable page) {
         try {
             SearchWorkflowInput input = new SearchWorkflowInput();
-            input.setFieldName(fieldName);
+            input.setProductCategoryId(productCategoryId);
             input.setQuery(query);
             Page<WorkflowDto> result = workflowService.searchWorkflow(input, page);
             return ResponseEntity.ok(new SingleResourceResponse<>(result));

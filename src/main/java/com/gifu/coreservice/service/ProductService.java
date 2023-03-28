@@ -1,24 +1,20 @@
 package com.gifu.coreservice.service;
 
-import com.gifu.coreservice.entity.PricingRange;
-import com.gifu.coreservice.entity.Product;
-import com.gifu.coreservice.entity.ProductCategory;
-import com.gifu.coreservice.entity.ProductVariant;
+import com.gifu.coreservice.entity.*;
 import com.gifu.coreservice.enumeration.CodePrefix;
 import com.gifu.coreservice.enumeration.SearchOperation;
+import com.gifu.coreservice.enumeration.VariantTypeEnum;
 import com.gifu.coreservice.exception.InvalidRequestException;
-import com.gifu.coreservice.model.dto.PricingRangeDto;
-import com.gifu.coreservice.model.dto.ProductSearchDto;
-import com.gifu.coreservice.model.dto.ProductVariantDto;
+import com.gifu.coreservice.model.dto.*;
+import com.gifu.coreservice.model.dto.order.ProductOrderDto;
+import com.gifu.coreservice.model.dto.order.ProductVariantViewDto;
 import com.gifu.coreservice.model.request.SaveProductRequest;
 import com.gifu.coreservice.model.request.SearchProductRequest;
-import com.gifu.coreservice.repository.PricingRangeRepository;
-import com.gifu.coreservice.repository.ProductCategoryRepository;
-import com.gifu.coreservice.repository.ProductRepository;
-import com.gifu.coreservice.repository.ProductVariantRepository;
+import com.gifu.coreservice.repository.*;
 import com.gifu.coreservice.repository.spec.BasicSpec;
 import com.gifu.coreservice.repository.spec.SearchCriteria;
 import com.gifu.coreservice.utils.FileUtils;
+import com.gifu.coreservice.utils.SpecUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
@@ -31,6 +27,7 @@ import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -41,11 +38,19 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
     @Autowired
-    private ProductVariantRepository productVariantRepository;
+    private ProductVariantPriceRepository productVariantPriceRepository;
     @Autowired
     private PricingRangeRepository pricingRangeRepository;
     @Autowired
     private ProductCategoryRepository productCategoryRepository;
+    @Autowired
+    private VariantRepository variantRepository;
+    @Autowired
+    private ContentRepository contentRepository;
+    @Autowired
+    private ProductVariantViewRepository productVariantViewRepository;
+    @Autowired
+    private ProductVariantVisibilityRuleRepository productVariantVisibilityRuleRepository;
 
     @Value("${picture.path}")
     private String pictureBasePath;
@@ -55,6 +60,44 @@ public class ProductService {
         return CodePrefix.PRODUCT.getPrefix().concat(com.gifu.coreservice.utils.StringUtils.toDigits(count, 5));
     }
 
+    public ProductOrderDto getProductById(Long productId) throws InvalidRequestException {
+        Optional<Product> productOpt = productRepository.findById(productId);
+        if (productOpt.isEmpty() || productOpt.get().isDeleted()) {
+            throw new InvalidRequestException("Product (id=" + productId + ") is not existed");
+        }
+        List<ProductVariantView> productVariantViews = productVariantViewRepository.findByProductId(productId);
+        List<ProductVariantViewDto> viewDtos = productVariantViews.stream().map(it -> {
+            List<ProductVariantVisibilityRule> rules = productVariantVisibilityRuleRepository.findByProductVariantViewId(it.getId());
+            return ProductVariantViewDto.builder()
+                    .variantTypeCode(VariantTypeEnum.valueOf(it.getVariantTypeCode()))
+                    .variantIds(it.getVariantIds())
+                    .rules(rules)
+                    .build();
+        }).collect(Collectors.toList());
+
+        List<ProductVariantPrice> productVariantPrices = productVariantPriceRepository.findByProductId(productId);
+        List<PricingRange> pricingRanges = pricingRangeRepository.findByProductId(productId);
+
+        Product product = productOpt.get();
+        return ProductOrderDto.builder()
+                .id(product.getId())
+                .productCode(product.getProductCode())
+                .productCategoryId(product.getProductCategoryId())
+                .productType(product.getProductType())
+                .name(product.getName())
+                .existingPicture(product.getPicture())
+                .length(product.getLength())
+                .width(product.getWidth())
+                .height(product.getHeight())
+                .weight(product.getWeight())
+                .minOrder(product.getMinOrder())
+                .description(product.getDescription())
+                .productVariantViews(viewDtos)
+                .productVariantPrices(productVariantPrices)
+                .pricingRanges(pricingRanges)
+                .build();
+    }
+
     @Transactional
     public Product saveProduct(SaveProductRequest request, MultipartFile pictureFile, String updatedBy) throws InvalidRequestException, IOException {
         Product product = new Product();
@@ -62,19 +105,20 @@ public class ProductService {
         product.setIsNotAvailable(false);
         product.setCreatedBy(updatedBy);
         product.setCreatedDate(ZonedDateTime.now());
-        if(request.getId()!=null){
+        product.setProductCode(generateCode());
+        if (request.getId() != null) {
             Optional<Product> prodOpt = productRepository.findById(request.getId());
-            if(prodOpt.isEmpty()){
+            if (prodOpt.isEmpty()) {
                 throw new InvalidRequestException("Product is not existed");
             }
             product = prodOpt.get();
         }
         FileUtils fileUtils = new FileUtils();
-        if(pictureFile!=null){
+        if (pictureFile != null) {
             String filePath = fileUtils.storeFile(pictureFile, pictureBasePath);
             product.setPicture(filePath);
         }
-        product.setProductCode(generateCode());
+        product.setProductType(request.getProductType().name());
         product.setName(request.getName());
         product.setProductCategoryId(request.getCategoryId());
         product.setLength(request.getLength());
@@ -87,23 +131,39 @@ public class ProductService {
         product.setUpdatedDate(ZonedDateTime.now());
         productRepository.save(product);
 
+        cleanUpProductVariantView(product.getId());
+        for (ProductVariantViewInputRequestDto variantView : request.getProductVariantViews()) {
+            ProductVariantView productVariantView = new ProductVariantView();
+            productVariantView.setProductId(product.getId());
+
+            productVariantView.setVariantIds(com.gifu.coreservice.utils.StringUtils.toStringSeparatedWith(variantView.getVariantIds(), ","));
+            productVariantView.setVariantTypeCode(variantView.getVariantTypeCode().name());
+            productVariantViewRepository.save(productVariantView);
+
+            for (ProductVariantViewRuleInputRequestDto rule : variantView.getRules()) {
+                ProductVariantVisibilityRule visibilityRule = new ProductVariantVisibilityRule();
+                visibilityRule.setProductVariantViewId(productVariantView.getId());
+                visibilityRule.setVariantTypeCode(rule.getVariantTypeCode());
+                visibilityRule.setVariantIds(com.gifu.coreservice.utils.StringUtils.toStringSeparatedWith(rule.getVariantIds(), ","));
+                productVariantVisibilityRuleRepository.save(visibilityRule);
+            }
+        }
+
         cleanUpProductVariant(product.getId());
-        for(ProductVariantDto variants : request.getProductVariants()){
-            ProductVariant productVariant = new ProductVariant();
-            productVariant.setProductId(product.getId());
-            productVariant.setVariantId(variants.getMainVariantId());
-            productVariant.setFirstSubvariantId(variants.getFirstSubVariantId());
-            productVariant.setSecondSubvariantId(variants.getSecondSubVariantId());
-            productVariant.setPrice(variants.getPrice());
-            productVariantRepository.save(productVariant);
+        for (ProductVariantPriceDto variant : request.getProductVariantPrices()) {
+            ProductVariantPrice productVariantPrice = new ProductVariantPrice();
+            productVariantPrice.setProductId(product.getId());
+            productVariantPrice.setVariantIds(com.gifu.coreservice.utils.StringUtils.toStringSeparatedWith(variant.getVariantIds(), ","));
+            productVariantPrice.setPrice(variant.getPrice());
+            productVariantPriceRepository.save(productVariantPrice);
         }
 
         cleanUpPricingRange(product.getId());
-        for(PricingRangeDto item : request.getPricingRanges()){
+        for (PricingRangeDto item : request.getPricingRanges()) {
             PricingRange pricingRange = new PricingRange();
             pricingRange.setProductId(product.getId());
-            pricingRange.setQtyMax(item.getMaxQuantity());
-            pricingRange.setQtyMin(item.getMinQuantity());
+            pricingRange.setQtyMax(item.getQtyMax());
+            pricingRange.setQtyMin(item.getQtyMin());
             pricingRange.setPrice(item.getPrice());
             pricingRangeRepository.save(pricingRange);
         }
@@ -111,34 +171,45 @@ public class ProductService {
         return product;
     }
 
-    private void cleanUpPricingRange(Long productId){
+    private void cleanUpPricingRange(Long productId) {
         List<PricingRange> pricingRanges = pricingRangeRepository.findByProductId(productId);
-        for(PricingRange it : pricingRanges){
+        for (PricingRange it : pricingRanges) {
             pricingRangeRepository.deleteById(it.getId());
         }
     }
 
-    private void cleanUpProductVariant(Long productId){
-        List<ProductVariant> productVariants = productVariantRepository.findByProductId(productId);
-        for(ProductVariant it : productVariants){
-            productVariantRepository.deleteById(it.getId());
+    private void cleanUpProductVariant(Long productId) {
+        List<ProductVariantPrice> productVariantPrices = productVariantPriceRepository.findByProductId(productId);
+        for (ProductVariantPrice it : productVariantPrices) {
+            productVariantPriceRepository.deleteById(it.getId());
         }
     }
 
-    private Page<Product> searchProduct(SearchProductRequest request, Pageable pageable){
+    private void cleanUpProductVariantView(Long productId) {
+        List<ProductVariantView> productVariantViews = productVariantViewRepository.findByProductId(productId);
+        for (ProductVariantView it : productVariantViews) {
+            List<ProductVariantVisibilityRule> visibilityRules = productVariantVisibilityRuleRepository.findByProductVariantViewId(it.getId());
+            for (ProductVariantVisibilityRule rule : visibilityRules) {
+                productVariantVisibilityRuleRepository.delete(rule);
+            }
+            productVariantViewRepository.delete(it);
+        }
+    }
+
+    private Page<Product> searchProduct(SearchProductRequest request, Pageable pageable) {
         Specification<Product> specAnd = Specification.where(null);
         Specification<Product> specOr = Specification.where(null);
         if (request.getProductCategoryId() != null) {
             BasicSpec<Product> equalCategory = new BasicSpec<>(new SearchCriteria(
                     "productCategoryId", SearchOperation.EQUALS, request.getProductCategoryId()
             ));
-            specAnd.and(equalCategory);
+            specAnd = specAnd.and(equalCategory);
         }
         if (request.getProductType() != null) {
             BasicSpec<Product> equalProductType = new BasicSpec<>(new SearchCriteria(
                     "productType", SearchOperation.EQUALS, request.getProductType()
             ));
-            specAnd.and(equalProductType);
+            specAnd = specAnd.and(equalProductType);
         }
 
         if (StringUtils.hasText(request.getSearchQuery())) {
@@ -154,11 +225,11 @@ public class ProductService {
                     "productCategoryId", SearchOperation.IN, productCategoryIds
             ));
 
-            specOr.or(likeName).or(productCategoriesIn);
+            specOr = specOr.or(likeName).or(productCategoriesIn);
         }
 
         return productRepository.findAll(
-                Specification.where(specAnd).and(specOr),
+                Specification.where(specAnd).and(specOr).and(new SpecUtils<Product>().isNotTrue("isDeleted")),
                 pageable
         );
     }
@@ -167,7 +238,7 @@ public class ProductService {
         Page<Product> products = searchProduct(request, pageable);
 
         List<ProductSearchDto> dtoList = new ArrayList<>();
-        for(Product it : products.getContent()){
+        for (Product it : products.getContent()) {
             String size = it.getLength() + " X " + it.getWidth() + " X " + it.getHeight();
             ProductSearchDto dto = ProductSearchDto.builder()
                     .id(it.getId())
@@ -185,12 +256,12 @@ public class ProductService {
 
     private PricingRange getDisplayPrice(Long productId) throws InvalidRequestException {
         List<PricingRange> pricingOpt = pricingRangeRepository.findByProductIdAndQtyMaxIsNull(productId);
-        if(!pricingOpt.isEmpty()){
+        if (!pricingOpt.isEmpty()) {
             return pricingOpt.get(0);
         }
         Pageable pageable = PageRequest.of(0, 1, Sort.by("qtyMax").descending());
         pricingOpt = pricingRangeRepository.findByProductIdWithPageable(productId, pageable);
-        if(pricingOpt.isEmpty()){
+        if (pricingOpt.isEmpty()) {
             throw new InvalidRequestException("Pricing Range is not set");
         }
         return pricingOpt.get(0);

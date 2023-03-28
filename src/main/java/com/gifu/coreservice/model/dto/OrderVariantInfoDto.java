@@ -10,8 +10,8 @@ import java.util.List;
 public class OrderVariantInfoDto {
     private Long id;
     private String variantTypeCode;
-    private String variantCode;
-    private String variantContentCode;
+//    private String variantCode;
+//    private String variantContentCode;
     private String variantName;
     private String variantContentName;
     private String variantContentPicture;

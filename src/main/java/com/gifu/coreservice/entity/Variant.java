@@ -34,10 +34,10 @@ public class Variant {
     @Column(name = "is_deleted")
     private boolean isDeleted = Boolean.FALSE;
 
-    @OneToMany()
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JoinColumn(name = "variant_id")
-    private Set<Content> contents;
+//    @OneToMany()
+//    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+//    @JoinColumn(name = "variant_id")
+//    private Set<Content> contents;
 
     @Column(name = "created_date")
     private ZonedDateTime createdDate;

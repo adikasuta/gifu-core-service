@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Setter
 public class XenditConfiguration {
+    private String host;
     private String apiKey;
     private String callbackKey;
     private String dynamicVaLength;

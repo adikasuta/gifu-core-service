@@ -73,11 +73,12 @@ public class UserService {
         BasicSpec<User> emailLike = new BasicSpec<>(new SearchCriteria("email", SearchOperation.LIKE, request.getSearchQuery()));
         BasicSpec<User> employeeCodeLike = new BasicSpec<>(new SearchCriteria("employeeCode", SearchOperation.LIKE, request.getSearchQuery()));
         Specification<User> searchQuery = Specification.where(nameLike).or(emailLike).or(employeeCodeLike);
+        Specification<User> where = Specification.where(searchQuery);
         if (request.getRoleId() != null) {
             BasicSpec<User> roleIdEquals = new BasicSpec<>(new SearchCriteria("roleId", SearchOperation.EQUALS, request.getRoleId()));
-            searchQuery.and(roleIdEquals);
+            where = where.and(roleIdEquals);
         }
-        Page<User> userPage = userRepository.findAll(searchQuery, pageable);
+        Page<User> userPage = userRepository.findAll(where, pageable);
         return userPage.map(it -> {
             UserDto mapped = UserDto.builder().id(it.getId())
                     .name(it.getName())

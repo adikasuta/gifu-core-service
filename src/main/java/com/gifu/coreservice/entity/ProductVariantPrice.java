@@ -6,21 +6,17 @@ import javax.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "product_variant")
+@Table(name = "product_variant_price")
 @Data
-public class ProductVariant {
+public class ProductVariantPrice {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(name="variant_ids")
+    private String variantIds;
     @Column(name = "product_id")
     private Long productId;
-    @Column(name = "variant_id")
-    private Long variantId;
-    @Column(name = "first_subvariant_id")
-    private Long firstSubvariantId;
-    @Column(name = "second_subvariant_id")
-    private Long secondSubvariantId;
     @Column(name = "price")
     private BigDecimal price;
 }

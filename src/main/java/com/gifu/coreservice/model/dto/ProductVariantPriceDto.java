@@ -1,13 +1,14 @@
 package com.gifu.coreservice.model.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
-import javax.persistence.Column;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
-public class PricingRangeDto {
-    private Integer qtyMin;
-    private Integer qtyMax;
+@Builder
+public class ProductVariantPriceDto {
+    private List<Long> variantIds;
     private BigDecimal price;
 }

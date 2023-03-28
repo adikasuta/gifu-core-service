@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet author="suta"  id="202303261207">
+        <renameTable oldTableName="product_variant" newTableName="product_variant_price"/>
+
+        <createTable tableName="product_variant_view">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_id" type="bigint"/>
+            <column name="variant_type_code" type="varchar(255)"/>
+            <column name="variant_ids" type="varchar(255)"/>
+        </createTable>
+
+        <createTable tableName="product_variant_visibility_rule">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_variant_view_id" type="bigint"/>
+            <column name="variant_type_code" type="varchar(255)"/>
+            <column name="variant_ids" type="text"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

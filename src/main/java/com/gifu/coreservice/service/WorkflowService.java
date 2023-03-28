@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 @Service
 public class WorkflowService {
 
-    //TODO: check is_deleted before select
     @Autowired
     private WorkflowRepository workflowRepository;
     @Autowired
@@ -277,28 +276,22 @@ public class WorkflowService {
     }
 
     public Page<WorkflowDto> searchWorkflow(SearchWorkflowInput input, Pageable pageable) {
-        String fieldName = input.getFieldName();
-        if(!org.springframework.util.StringUtils.hasText(fieldName)){
-            fieldName = "name";
-        }
-
-        BasicSpec<ProductCategory> like = new BasicSpec<>(new SearchCriteria(
-                fieldName, SearchOperation.LIKE, input.getQuery()
-        ));
-        List<ProductCategory> productCategories = productCategoryRepository.findAll(Specification.where(like)
-                .and(new SpecUtils<ProductCategory
-                >().isNotTrue("isDeleted")));
-
-        List<String> workflowCodes = productCategories.stream().map(ProductCategory::getWorkflowCode).collect(Collectors.toList());
-        Page<Workflow> workflows = Page.empty(pageable);
-        if(!workflowCodes.isEmpty()){
+        BasicSpec<Workflow> likeName = new BasicSpec<>(new SearchCriteria("name", SearchOperation.LIKE, input.getQuery()));
+        Specification<Workflow> querySpec = Specification.where(likeName);
+        if(input.getProductCategoryId()!=null){
+            BasicSpec<ProductCategory> idEquals = new BasicSpec<>(new SearchCriteria("id", SearchOperation.EQUALS, input.getProductCategoryId()));
+            List<ProductCategory> productCategories = productCategoryRepository.findAll(Specification.where(idEquals)
+                    .and(new SpecUtils<ProductCategory
+                            >().isNotTrue("isDeleted")));
+            List<String> workflowCodes = productCategories.stream().map(ProductCategory::getWorkflowCode).collect(Collectors.toList());
             BasicSpec<Workflow> inWorkflowCodes = new BasicSpec<>(new SearchCriteria(
                     "workflowCode", SearchOperation.IN, workflowCodes
             ));
-            Specification<Workflow> notDeleted = new SpecUtils<Workflow>().isNotTrue("isDeleted");
-            workflows = workflowRepository.findAll(Specification.where(inWorkflowCodes).and(notDeleted), pageable);
+            querySpec = querySpec.and(inWorkflowCodes);
         }
-
+        Specification<Workflow> notDeleted = new SpecUtils<Workflow>().isNotTrue("isDeleted");
+        querySpec = querySpec.and(notDeleted);
+        Page<Workflow> workflows = workflowRepository.findAll(querySpec, pageable);
         return workflows.map(this::getDto);
     }
 

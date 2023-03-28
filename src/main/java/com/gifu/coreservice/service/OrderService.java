@@ -57,7 +57,7 @@ public class OrderService {
     @Autowired
     private VariantRepository variantRepository;
     @Autowired
-    private ProductVariantRepository productVariantRepository;
+    private ProductVariantPriceRepository productVariantPriceRepository;
     @Autowired
     private ContentRepository contentRepository;
     @Autowired
@@ -79,9 +79,9 @@ public class OrderService {
                 return OrderVariantInfoDto.builder()
                         .id(it.getId())
                         .variantTypeCode(it.getVariantTypeCode())
-                        .variantCode(it.getVariantCode())
+//                        .variantCode(it.getVariantCode())
                         .variantName(it.getVariantName())
-                        .variantContentCode(it.getVariantContentCode())
+//                        .variantContentCode(it.getVariantContentCode())
                         .variantContentName(it.getVariantContentName())
                         .variantContentPicture(it.getVariantContentPicture())
                         .additionalInfo(mappedAdditionalInfo)
@@ -261,6 +261,7 @@ public class OrderService {
 //        return qty;
 //    }
 
+    //TODO: create addToCartSouvenir
 //    @Transactional
 //    public InvoiceSouvenirDto addToCartSouvenir(OrderSouvenirRequest request) {
 //        Order order = new Order();

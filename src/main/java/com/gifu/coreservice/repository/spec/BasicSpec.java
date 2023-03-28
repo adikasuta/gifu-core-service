@@ -25,12 +25,19 @@ public class BasicSpec<T> implements Specification<T> {
     public Predicate toPredicate(Root<T> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
         switch (criteria.getOperation()) {
             case EQUALS:
+                if (root.get(criteria.getKey()).getJavaType() == String.class) {
+                    String val = (String) (criteria.getValue());
+                    return builder.equal(
+                            root.get(criteria.getKey()), val);
+                }
                 return builder.equal(
                         root.get(criteria.getKey()), criteria.getValue());
             case LIKE:
                 if (root.get(criteria.getKey()).getJavaType() == String.class) {
+                    String val = (String) (criteria.getValue());
                     return builder.like(
-                            root.get(criteria.getKey()), "%" + criteria.getValue() + "%");
+                            builder.upper(root.get(criteria.getKey())),
+                            "%"+val.toUpperCase()+"%");
                 } else {
                     return builder.equal(root.get(criteria.getKey()), criteria.getValue());
                 }
@@ -52,7 +59,7 @@ public class BasicSpec<T> implements Specification<T> {
                 }
                 CriteriaBuilder.In<List<Object>> in = builder.in(
                         root.get(criteria.getKey()));
-                in.value((List<Object>) criteria.getValue());
+                return in.value((List<Object>) criteria.getValue());
             case NOT_EQUALS:
                 return builder.notEqual(
                         root.get(criteria.getKey()), criteria.getValue().toString());

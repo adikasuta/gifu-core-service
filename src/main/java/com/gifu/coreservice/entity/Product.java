@@ -15,8 +15,8 @@ import java.util.Set;
 @Table(name = "product")
 @Data
 @SQLDelete(sql = "UPDATE product SET is_deleted = true WHERE id=?")
-@FilterDef(name = "deletedProductFilter", parameters = @ParamDef(name = "isDeleted", type = "boolean"))
-@Filter(name = "deletedProductFilter", condition = "is_deleted = :isDeleted")
+//@FilterDef(name = "deletedProductFilter", parameters = @ParamDef(name = "isDeleted", type = "boolean"))
+//@Filter(name = "deletedProductFilter", condition = "is_deleted = :isDeleted")
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

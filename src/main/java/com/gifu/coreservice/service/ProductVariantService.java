@@ -1,8 +1,6 @@
 package com.gifu.coreservice.service;
 
-import com.gifu.coreservice.entity.Content;
-import com.gifu.coreservice.entity.ProductVariant;
-import com.gifu.coreservice.entity.Variant;
+import com.gifu.coreservice.entity.*;
 import com.gifu.coreservice.enumeration.CodePrefix;
 import com.gifu.coreservice.enumeration.SearchOperation;
 import com.gifu.coreservice.enumeration.VariantTypeEnum;
@@ -16,6 +14,7 @@ import com.gifu.coreservice.repository.*;
 import com.gifu.coreservice.repository.spec.BasicSpec;
 import com.gifu.coreservice.repository.spec.SearchCriteria;
 import com.gifu.coreservice.utils.FileUtils;
+import com.gifu.coreservice.utils.SpecUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -28,14 +27,11 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class ProductVariantService {
-    //TODO: check is_deleted = false before selecting
 
     @Autowired
     private ProductRepository productRepository;
@@ -46,9 +42,13 @@ public class ProductVariantService {
     @Autowired
     private ProductCategoryRepository productCategoryRepository;
     @Autowired
-    private ProductVariantRepository productVariantRepository;
+    private ProductVariantPriceRepository productVariantPriceRepository;
     @Autowired
     private VariantTypeRepository variantTypeRepository;
+    @Autowired
+    private ProductVariantViewRepository productVariantViewRepository;
+    @Autowired
+    private ProductVariantVisibilityRuleRepository productVariantVisibilityRuleRepository;
 
     @Value("${picture.path}")
     private String pictureBasePath;
@@ -57,6 +57,24 @@ public class ProductVariantService {
         List<ValueTextDto> types = new ArrayList<>();
         for(VariantTypeEnum item : VariantTypeEnum.values()){
             types.add(new ValueTextDto(item.name(), item.getText(), item.getMeta()));
+        }
+        return types;
+    }
+
+    public List<ValueTextDto> getVariantReferenceByVariantTypeCode(VariantTypeEnum variantTypeCode){
+        List<ValueTextDto> types = new ArrayList<>();
+        List<Variant> variants = variantRepository.findByVariantTypeCodeAndIsDeletedIsFalse(variantTypeCode.name());
+        for(Variant it : variants){
+            types.add(new ValueTextDto(String.valueOf(it.getId()), it.getName()));
+        }
+        return types;
+    }
+
+    public List<ValueTextDto> getVariantReference(){
+        List<ValueTextDto> types = new ArrayList<>();
+        List<Variant> variants = variantRepository.findByIsDeletedIsFalse();
+        for(Variant it : variants){
+            types.add(new ValueTextDto(String.valueOf(it.getId()), it.getName(), it.getVariantTypeCode()));
         }
         return types;
     }
@@ -90,15 +108,19 @@ public class ProductVariantService {
         BasicSpec<Variant> nameContains = new BasicSpec<>(new SearchCriteria("name", SearchOperation.LIKE, request.getQuery()));
         BasicSpec<Variant> codeContains = new BasicSpec<>(new SearchCriteria("variantCode", SearchOperation.LIKE, request.getQuery()));
         BasicSpec<Variant> typeContains = new BasicSpec<>(new SearchCriteria("variantTypeCode", SearchOperation.LIKE, request.getQuery()));
-        Specification<Variant> where = Specification.where(nameContains).or(codeContains).or(typeContains);
+        Specification<Variant> queryLike = Specification.where(nameContains).or(codeContains).or(typeContains);
+        Specification<Variant> where = Specification.where(queryLike);
         if (StringUtils.hasText(request.getVariantTypeCode())) {
             BasicSpec<Variant> typeEquals = new BasicSpec<>(new SearchCriteria("variantTypeCode", SearchOperation.EQUALS, request.getVariantTypeCode()));
-            where.and(typeEquals);
+            where = where.and(typeEquals);
         }
+        SpecUtils<Variant> specUtils = new SpecUtils<>();
+        Specification<Variant> notDeleted = specUtils.isNotTrue("isDeleted");
+        where = where.and(notDeleted);
         Page<Variant> pages = variantRepository.findAll(where, pageable);
         return pages.map(it -> {
             List<Content> contents = contentRepository.findByVariantId(it.getId());
-            long numberOfUsage = productVariantRepository.countByVariations(it.getId());
+            long numberOfUsage = productVariantPriceRepository.countByVariantId(it.getId());
             return SearchProductVariantDto.builder()
                     .id(it.getId())
                     .name(it.getName())
@@ -122,20 +144,39 @@ public class ProductVariantService {
 
     @Transactional
     public boolean deleteVariant(Long variantId) {
-        List<ProductVariant> productVariants = productVariantRepository.findByVariations(variantId);
-        for (ProductVariant it : productVariants) {
-            if (variantId.equals(it.getVariantId())) {
-                productVariantRepository.delete(it);
-                continue;
+        List<ProductVariantPrice> productVariantPrices = productVariantPriceRepository.findByVariantId(variantId);
+        for (ProductVariantPrice it : productVariantPrices){
+            List<Long> variantIds = Arrays.stream(it.getVariantIds().split(",")).map(Long::valueOf).collect(Collectors.toList());
+            variantIds.removeIf(id-> Objects.equals(id, variantId));
+            if (variantIds.isEmpty()){
+                productVariantPriceRepository.delete(it);
+            } else {
+                it.setVariantIds(com.gifu.coreservice.utils.StringUtils.toStringSeparatedWith(variantIds, ","));
+                productVariantPriceRepository.save(it);
             }
-            if (variantId.equals(it.getFirstSubvariantId())) {
-                it.setFirstSubvariantId(null);
-                productVariantRepository.save(it);
-                continue;
+        }
+
+        List<ProductVariantView> productVariantViews = productVariantViewRepository.findByVariantId(variantId);
+        for (ProductVariantView it : productVariantViews){
+            List<Long> variantIds = Arrays.stream(it.getVariantIds().split(",")).map(Long::valueOf).collect(Collectors.toList());
+            variantIds.removeIf(id-> Objects.equals(id, variantId));
+            if (variantIds.isEmpty()){
+                productVariantViewRepository.delete(it);
+            } else {
+                it.setVariantIds(com.gifu.coreservice.utils.StringUtils.toStringSeparatedWith(variantIds, ","));
+                productVariantViewRepository.save(it);
             }
-            if (variantId.equals(it.getSecondSubvariantId())) {
-                it.setSecondSubvariantId(null);
-                productVariantRepository.save(it);
+        }
+
+        List<ProductVariantVisibilityRule> productVariantVisibilityRules = productVariantVisibilityRuleRepository.findByVariantId(variantId);
+        for (ProductVariantVisibilityRule it : productVariantVisibilityRules){
+            List<Long> variantIds = Arrays.stream(it.getVariantIds().split(",")).map(Long::valueOf).collect(Collectors.toList());
+            variantIds.removeIf(id-> Objects.equals(id, variantId));
+            if (variantIds.isEmpty()){
+                productVariantVisibilityRuleRepository.delete(it);
+            } else {
+                it.setVariantIds(com.gifu.coreservice.utils.StringUtils.toStringSeparatedWith(variantIds, ","));
+                productVariantVisibilityRuleRepository.save(it);
             }
         }
         contentRepository.deleteByVariantId(variantId);
@@ -171,7 +212,7 @@ public class ProductVariantService {
         Variant variant = new Variant();
         if (request.getId() != null) {
             Optional<Variant> existing = variantRepository.findById(request.getId());
-            if (existing.isEmpty()) {
+            if (existing.isEmpty() || existing.get().isDeleted()) {
                 throw new InvalidRequestException("Variant is not existed");
             }
             variant = existing.get();

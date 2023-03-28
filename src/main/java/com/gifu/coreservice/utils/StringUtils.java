@@ -1,6 +1,8 @@
 package com.gifu.coreservice.utils;
 
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public class StringUtils {
 
@@ -12,6 +14,11 @@ public class StringUtils {
         return String.format("%0"+digits+"d", num);
     }
 
+    public static <T> String toStringSeparatedWith(List<T> list, String separator){
+        return list.stream()
+                .map(Object::toString)
+                .collect(Collectors.joining(","));
+    }
     public static String generateReferralCode() {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < LENGTH; i++) {

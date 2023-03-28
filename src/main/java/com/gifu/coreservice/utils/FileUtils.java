@@ -1,6 +1,5 @@
 package com.gifu.coreservice.utils;
 
-import liquibase.util.file.FilenameUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,7 +30,7 @@ public class FileUtils {
     }
 
     public static String getFileExtension(String filename) {
-        if(StringUtils.hasText(filename)){
+        if (!StringUtils.hasText(filename)) {
             return "";
         }
         int dotIndex = filename.lastIndexOf(".");

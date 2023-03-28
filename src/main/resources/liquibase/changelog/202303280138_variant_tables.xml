@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet author="suta"  id="202303280138">
+        <dropColumn tableName="product_variant_price" columnName="variant_id"/>
+        <dropColumn tableName="product_variant_price" columnName="first_subvariant_id"/>
+        <dropColumn tableName="product_variant_price" columnName="second_subvariant_id"/>
+        <addColumn tableName="product_variant_price">
+            <column name="variant_ids" type="TEXT"/>
+        </addColumn>
+        <modifyDataType tableName="product_variant_view" columnName="variant_ids" newDataType="TEXT"/>
+        <modifyDataType tableName="product_variant_visibility_rule" columnName="variant_ids" newDataType="TEXT"/>
+    </changeSet>
+
+</databaseChangeLog>
