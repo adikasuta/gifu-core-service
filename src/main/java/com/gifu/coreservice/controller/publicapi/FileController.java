@@ -19,7 +19,7 @@ import java.net.URLConnection;
 
 @Slf4j
 @RestController
-@RequestMapping(path = "api/public/assets")
+@RequestMapping(path = "public/api/assets")
 public class FileController {
     @Value("${picture.path}")
     private String pictureBasePath;

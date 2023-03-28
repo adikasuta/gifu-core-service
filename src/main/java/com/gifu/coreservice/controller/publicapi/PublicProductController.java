@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(path = "api/public/product")
+@RequestMapping(path = "public/api/product")
 public class PublicProductController {
 
     @Autowired

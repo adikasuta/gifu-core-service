@@ -9,6 +9,7 @@ import com.gifu.coreservice.model.response.LoginResponse;
 import com.gifu.coreservice.model.response.SingleResourceResponse;
 import com.gifu.coreservice.service.AuthService;
 import com.gifu.coreservice.service.UserService;
+import com.gifu.coreservice.utils.SessionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping(path = "api/auth")
+@RequestMapping(path = "auth/api")
 public class AuthController {
 
     @Autowired
@@ -62,7 +63,7 @@ public class AuthController {
     @PostMapping("change-password")
     public ResponseEntity<SingleResourceResponse<String>> changePassword(@RequestBody @Valid ChangePasswordRequest request) {
         try {
-            User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            User user = SessionUtils.getUserContext();
             authService.changePassword(user.getEmail(), request.getOldPassword(), request.getNewPassword());
             return ResponseEntity.ok(new SingleResourceResponse<>("Change password success"));
         } catch (Exception ex) {

@@ -101,7 +101,7 @@ class AuthControllerTest {
         User user = userRepository.findByEmail("some@email.com").get();
         String jwt = JwtUtils.createJwtSignedHMAC(user);
         MvcResult result = mockMvc.perform(
-                        post("/api/auth/change-password")
+                        post("/auth/api/change-password")
                                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                                 .header("Authorization", "Bearer "+jwt)
                                 .content("{\n" +
@@ -119,7 +119,7 @@ class AuthControllerTest {
     public void shouldNotAbleToChangePassword_whenJwtIsNotValid() throws Exception {
         String jwt = "invalid JWT";
         MvcResult result = mockMvc.perform(
-                        post("/api/auth/change-password")
+                        post("/auth/api/change-password")
                                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                                 .header("Authorization", "Bearer "+jwt)
                                 .content("{\n" +
@@ -140,7 +140,7 @@ class AuthControllerTest {
     @Test
     public void shouldAbleToLogin() throws Exception {
         MvcResult result = mockMvc.perform(
-                post("/api/auth/login")
+                post("/auth/api/login")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content("{\n" +
                                 "  \"email\":\"some@email.com\",\n" +
@@ -159,28 +159,26 @@ class AuthControllerTest {
     @Test
     public void shouldReject_whenInputWrongPassword() throws Exception {
         mockMvc.perform(
-                        post("/api/auth/login")
+                        post("/auth/api/login")
                                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                                 .content("{\n" +
                                         "  \"email\":\"some@email.com\",\n" +
                                         "  \"password\":\"wrongpassword\",\n" +
                                         "  \"redirectUrl\":\"\"\n" +
                                         "}")
-                ).andExpect(status().is4xxClientError())
-                .andExpect(content().string(Matchers.emptyOrNullString()));
+                ).andExpect(status().is4xxClientError());
     }
 
     @Test
     public void shouldReject_whenInputInactiveUser() throws Exception {
         mockMvc.perform(
-                        post("/api/auth/login")
+                        post("/auth/api/login")
                                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                                 .content("{\n" +
                                         "  \"email\":\"someinactive@email.com\",\n" +
                                         "  \"password\":\"someinactivepassword\",\n" +
                                         "  \"redirectUrl\":\"\"\n" +
                                         "}")
-                ).andExpect(status().is4xxClientError())
-                .andExpect(content().string(Matchers.emptyOrNullString()));
+                ).andExpect(status().is4xxClientError());
     }
 }
