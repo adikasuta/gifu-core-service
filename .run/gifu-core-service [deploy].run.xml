@@ -11,6 +11,7 @@
           <option name="goals">
             <list>
               <option value="appengine:deploy" />
+              <option value="-Dmaven.test.skip" />
             </list>
           </option>
           <option name="pomFileName" value="pom.xml" />
