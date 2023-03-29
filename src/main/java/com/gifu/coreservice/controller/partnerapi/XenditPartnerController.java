@@ -1,12 +1,10 @@
 package com.gifu.coreservice.controller.partnerapi;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.gifu.coreservice.entity.Bill;
 import com.gifu.coreservice.exception.JsonStringToObjectException;
 import com.gifu.coreservice.exception.ObjectToJsonStringException;
 import com.gifu.coreservice.model.request.XenditVaCallbackTopUpDto;
 import com.gifu.coreservice.model.request.XenditVaCreateOrUpdateCallback;
-import com.gifu.coreservice.model.response.SingleResourceResponse;
 import com.gifu.coreservice.service.ObjectMapperService;
 import com.gifu.coreservice.service.TimelineService;
 import com.gifu.coreservice.service.XenditService;
@@ -21,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping(path = "api/partner/xendit")
+@RequestMapping(path = "partner/api/xendit")
 public class XenditPartnerController {
 
     @Autowired
@@ -40,7 +38,7 @@ public class XenditPartnerController {
             xenditService.handleModifyVaCallback(callback);
             return ResponseEntity.ok("Post request for virtual account callback received.");
         } catch (JsonStringToObjectException | ObjectToJsonStringException e) {
-            log.error("Failed handling VA Update from Xendit, message="+e.getMessage(), e);
+            log.error("Failed handling VA Update from Xendit, message=" + e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
@@ -51,12 +49,12 @@ public class XenditPartnerController {
             log.info("Incoming TOPUP NOTIFY from xendit : {}", requestBody);
             XenditVaCallbackTopUpDto callback = objectMapperService.readToObject(requestBody, XenditVaCallbackTopUpDto.class);
             Bill bill = xenditService.handleBillPaid(callback);
-            if(bill!=null){
+            if (bill != null) {
                 timelineService.startProductionTimeline(bill);
             }
             return ResponseEntity.ok("Post request for virtual account callback received.");
         } catch (JsonStringToObjectException | ObjectToJsonStringException e) {
-            log.error("Failed handling VA Update from Xendit, message="+e.getMessage(), e);
+            log.error("Failed handling VA Update from Xendit, message=" + e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
 
