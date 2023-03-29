@@ -2,7 +2,11 @@ version: "3.8"
 
 services:
   gifu-api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - BUILDKIT_CACHE_SIZE=1g
     container_name: gifu-core-service
     ports:
       - "8080:8080"
