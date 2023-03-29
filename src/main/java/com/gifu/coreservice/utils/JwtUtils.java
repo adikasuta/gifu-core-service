@@ -6,8 +6,10 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -24,29 +26,36 @@ import java.util.UUID;
 
 public class JwtUtils {
     private static PrivateKey getPrivateKey() throws URISyntaxException, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        FileUtils util = new FileUtils();
-        String key = Files.readString(util.getFileFromResource("private_key.pem").toPath(), Charset.defaultCharset());
+//        FileUtils util = new FileUtils();
+//        String key = Files.readString(util.getFileFromResource("private_key.pem").toPath(), Charset.defaultCharset());
+        try(InputStream is = JwtUtils.class.getResourceAsStream("/private_key.pem")){
+            String key = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            key = key.replace("-----BEGIN PRIVATE KEY-----", "");
+            key = key.replace("-----END PRIVATE KEY-----", "");
+            key = key.replaceAll("[\\t\\n\\r]+","");
 
-        key = key.replace("-----BEGIN PRIVATE KEY-----", "");
-        key = key.replace("-----END PRIVATE KEY-----", "");
-        key = key.replaceAll("[\\t\\n\\r]+","");
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(key));
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            PrivateKey privateKey = kf.generatePrivate(keySpec);
+            return privateKey;
+        }
 
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(key));
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        PrivateKey privateKey = kf.generatePrivate(keySpec);
-        return privateKey;
+
     }
 
     private static PublicKey getPublicKey() throws URISyntaxException, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        FileUtils util = new FileUtils();
-        String key = Files.readString(util.getFileFromResource("public_key.pem").toPath(), Charset.defaultCharset());
+//        FileUtils util = new FileUtils();
+//        String key = Files.readString(util.getFileFromResource("public_key.pem").toPath(), Charset.defaultCharset());
+        try(InputStream is = JwtUtils.class.getResourceAsStream("/public_key.pem")){
+            String key = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            key = key.replace("-----BEGIN PUBLIC KEY-----", "");
+            key = key.replace("-----END PUBLIC KEY-----", "");
+            key = key.replaceAll("[\\t\\n\\r]+","");
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(key));
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            return kf.generatePublic(keySpec);
+        }
 
-        key = key.replace("-----BEGIN PUBLIC KEY-----", "");
-        key = key.replace("-----END PUBLIC KEY-----", "");
-        key = key.replaceAll("[\\t\\n\\r]+","");
-        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(key));
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        return kf.generatePublic(keySpec);
     }
 
     public static String createJwtSignedHMAC(User user) throws InvalidKeySpecException, NoSuchAlgorithmException, URISyntaxException, IOException {
