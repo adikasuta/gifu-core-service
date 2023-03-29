@@ -10,6 +10,7 @@ import com.gifu.coreservice.model.response.SingleResourceResponse;
 import com.gifu.coreservice.service.AuthService;
 import com.gifu.coreservice.service.UserService;
 import com.gifu.coreservice.utils.SessionUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.Valid;
 
 @RestController
+@Slf4j
 @RequestMapping(path = "auth/api")
 public class AuthController {
 
@@ -54,6 +56,7 @@ public class AuthController {
             response.setToken(jwt);
             return ResponseEntity.ok(new SingleResourceResponse<>(response));
         } catch (Exception ex) {
+            log.error("ERROR LOGIN: "+ ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                     new SingleResourceResponse<>(HttpStatus.UNAUTHORIZED.getReasonPhrase(), HttpStatus.UNAUTHORIZED.value())
             );
