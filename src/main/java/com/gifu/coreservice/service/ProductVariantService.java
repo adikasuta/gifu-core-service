@@ -80,7 +80,7 @@ public class ProductVariantService {
     }
 
     public Page<SaveVariantContentRequest> findVariantContentsByVariantId(Long variantId, Pageable pageable) {
-        Page<Content> contents = contentRepository.findPageByVariantId(variantId, pageable);
+        Page<Content> contents = contentRepository.findPageByVariantIdAndIsDeleted(variantId, false, pageable);
         return contents.map(it -> SaveVariantContentRequest.builder()
                 .id(it.getId())
                 .variantId(it.getVariantId())

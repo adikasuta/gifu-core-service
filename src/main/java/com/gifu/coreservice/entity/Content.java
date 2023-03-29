@@ -12,7 +12,7 @@ import java.util.Set;
 @Entity
 @Table(name = "content")
 @Data
-@SQLDelete(sql = "UPDATE variant SET is_deleted = true WHERE id=?")
+@SQLDelete(sql = "UPDATE content SET is_deleted = true WHERE id=?")
 public class Content {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
