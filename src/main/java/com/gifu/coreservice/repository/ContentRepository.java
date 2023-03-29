@@ -14,6 +14,6 @@ public interface ContentRepository extends JpaRepository<Content, Long> {
 
     @Modifying
     void deleteByVariantId(Long variantId);
-    List<Content> findByVariantId(Long variantId);
+    List<Content> findByVariantIdAndIsDeleted(Long variantId, boolean isDeleted);
     Page<Content> findPageByVariantIdAndIsDeleted(Long variantId, boolean isDeleted, Pageable pageable);
 }

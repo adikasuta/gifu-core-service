@@ -119,7 +119,7 @@ public class ProductVariantService {
         where = where.and(notDeleted);
         Page<Variant> pages = variantRepository.findAll(where, pageable);
         return pages.map(it -> {
-            List<Content> contents = contentRepository.findByVariantId(it.getId());
+            List<Content> contents = contentRepository.findByVariantIdAndIsDeleted(it.getId(), false);
             long numberOfUsage = productVariantPriceRepository.countByVariantId(it.getId());
             return SearchProductVariantDto.builder()
                     .id(it.getId())
