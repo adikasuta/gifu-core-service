@@ -16,4 +16,6 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
     List<Product> findByProductCategoryIdIn(@Param("productCategoryId") List<Long> productCategoryId);
     List<Product> findByProductCategoryId(Long productCategoryId);
+
+    long countByProductCode(String productCode);
 }

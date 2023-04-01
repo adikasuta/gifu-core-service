@@ -164,8 +164,13 @@ public class ProductVariantService {
     }
 
     public String generateVariantCode() {
-        long count = variantRepository.count();
-        return CodePrefix.VARIANT.getPrefix().concat(com.gifu.coreservice.utils.StringUtils.toDigits(count, 5));
+        String token = com.gifu.coreservice.utils.StringUtils.generateRandomNumericString(5);
+        token = CodePrefix.VARIANT.getPrefix().concat(token);
+        long count = variantRepository.countByVariantCode(token);
+        if(count>0){
+            return generateVariantCode();
+        }
+        return token;
     }
 
     public boolean deleteVariantContent(Long contentId) {

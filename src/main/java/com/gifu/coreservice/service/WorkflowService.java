@@ -51,8 +51,13 @@ public class WorkflowService {
     private RefStatusPatternRepository refStatusPatternRepository;
 
     public String generateWorkflowCode() {
-        long count = workflowRepository.count();
-        return CodePrefix.WORKFLOW.getPrefix().concat(StringUtils.toDigits(count, 5));
+        String token = StringUtils.generateRandomNumericString(5);
+        token = CodePrefix.WORKFLOW.getPrefix().concat(token);
+        long count = workflowRepository.countByWorkflowCode(token);
+        if(count>0){
+            return this.generateWorkflowCode();
+        }
+        return token;
     }
 
     public WorkflowDto deleteWorkflow(Long workflowId, String deleterEmail) throws InvalidRequestException {

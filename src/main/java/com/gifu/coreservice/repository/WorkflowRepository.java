@@ -10,4 +10,5 @@ import java.util.Optional;
 @Repository
 public interface WorkflowRepository extends JpaRepository<Workflow, Long>, JpaSpecificationExecutor<Workflow> {
     Optional<Workflow> findByWorkflowCodeAndIsDeleted(String workflowCode, boolean isDeleted);
+    long countByWorkflowCode(String workflowCode);
 }

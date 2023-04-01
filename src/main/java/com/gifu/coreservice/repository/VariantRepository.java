@@ -15,6 +15,8 @@ public interface VariantRepository extends JpaRepository<Variant, Long>, JpaSpec
     List<Variant> findByIsDeletedIsFalse();
     List<Variant> findByIdIn(List<Long> ids);
     List<Variant> findByIdInAndIsDeleted(List<Long> ids, boolean isDeleted);
+
+    long countByVariantCode(String variantCode);
     default List<Variant> findByIds(String ids) {
         List<Long> idList = Arrays.stream(ids.split(","))
                 .map(Long::valueOf)

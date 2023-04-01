@@ -55,8 +55,12 @@ public class ProductService {
     private String pictureBasePath;
 
     public String generateCode() {
-        long count = productRepository.count() + 1;
-        return CodePrefix.PRODUCT.getPrefix().concat(com.gifu.coreservice.utils.StringUtils.toDigits(count, 5));
+        String token = com.gifu.coreservice.utils.StringUtils.generateRandomNumericString(5);
+        token = CodePrefix.PRODUCT.getPrefix().concat(token);
+        if(productRepository.countByProductCode(token)>0){
+            return generateCode();
+        }
+        return token;
     }
 
     public ProductOrderDto getProductById(Long productId) throws InvalidRequestException {
