@@ -18,12 +18,12 @@ public class OrderVariant {
     private Long orderId;
     @Column(name = "variant_type_code")
     private String variantTypeCode;
-    @Column(name = "variant_code")
-    private String variantCode;
+    @Column(name = "variant_id")
+    private Long variantId;
     @Column(name = "variant_name")
     private String variantName;
-    @Column(name = "variant_content_code")
-    private String variantContentCode;
+    @Column(name = "content_id")
+    private Long contentId;
     @Column(name = "variant_content_name")
     private String variantContentName;
     @Column(name = "variant_content_picture")

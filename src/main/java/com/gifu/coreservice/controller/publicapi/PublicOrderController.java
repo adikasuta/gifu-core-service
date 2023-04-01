@@ -1,6 +1,7 @@
 package com.gifu.coreservice.controller.publicapi;
 
 import com.gifu.coreservice.model.request.ConfirmOrderRequest;
+import com.gifu.coreservice.model.request.OrderRequest;
 import com.gifu.coreservice.model.response.SingleResourceResponse;
 import com.gifu.coreservice.service.OrderPaymentService;
 import com.gifu.coreservice.service.OrderService;
@@ -23,19 +24,19 @@ public class PublicOrderController {
     private OrderService orderService;
     @Autowired
     private OrderPaymentService orderPaymentService;
-//
-//    @PostMapping
-//    public ResponseEntity<SingleResourceResponse<String>> postConfirmation(
-//            @RequestBody ConfirmOrderRequest request
-//    ) {
-//        try {
-//            orderService.confirmOrder(request);
-//            return ResponseEntity.ok(new SingleResourceResponse<>("Success"));
-//        } catch (Exception ex) {
-//            log.error("ERROR POST ORDER CONFIRMATION: " + ex.getMessage(), ex);
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-//                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
-//            );
-//        }
-//    }
+
+    @PostMapping
+    public ResponseEntity<SingleResourceResponse<String>> postOrder(
+            @RequestBody OrderRequest request
+    ) {
+        try {
+            orderService.addToCartSouvenir(request);
+            return ResponseEntity.ok(new SingleResourceResponse<>("Success"));
+        } catch (Exception ex) {
+            log.error("ERROR POST ORDER: " + ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
+        }
+    }
 }

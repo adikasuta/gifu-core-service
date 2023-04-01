@@ -18,6 +18,7 @@ public class Order {
     private Long orderCheckoutId;
     @Column(name = "order_code")
     private String orderCode;
+
     @Column(name = "product_id")
     private Long productId;
     @Column(name = "product_name")
@@ -26,8 +27,10 @@ public class Order {
     private String productCode;
     @Column(name = "product_type")
     private String productType;
+
     @Column(name = "status")
     private String status;
+
     @Column(name = "customer_id")
     private Long customerId;
     @Column(name = "customer_name")
@@ -44,6 +47,10 @@ public class Order {
 
     @Column(name = "quantity")
     private Integer quantity;
+    @Column(name = "product_price")
+    private BigDecimal productPrice;
+    @Column(name = "variant_price")
+    private BigDecimal variantPrice;
     @Column(name = "sub_total")
     private BigDecimal subTotal;
     @Column(name = "shipping_fee")

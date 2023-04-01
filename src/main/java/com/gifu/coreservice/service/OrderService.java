@@ -3,11 +3,12 @@ package com.gifu.coreservice.service;
 import com.gifu.coreservice.entity.*;
 import com.gifu.coreservice.enumeration.OrderStatus;
 import com.gifu.coreservice.enumeration.SearchOperation;
+import com.gifu.coreservice.enumeration.SystemConst;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.*;
 import com.gifu.coreservice.model.request.ChangeStatusRequest;
 import com.gifu.coreservice.model.request.ConfirmOrderRequest;
-import com.gifu.coreservice.model.request.OrderSouvenirRequest;
+import com.gifu.coreservice.model.request.OrderRequest;
 import com.gifu.coreservice.model.request.SearchDashboardOrderRequest;
 import com.gifu.coreservice.repository.*;
 import com.gifu.coreservice.repository.spec.BasicSpec;
@@ -17,11 +18,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -64,6 +69,14 @@ public class OrderService {
     private OrderCheckoutRepository orderCheckoutRepository;
     @Autowired
     private HistoricalOrderStatusService historicalOrderStatusService;
+    @Autowired
+    private PricingRangeRepository pricingRangeRepository;
+    @Autowired
+    private OrderVariantPriceRepository orderVariantPriceRepository;
+    @Autowired
+    private ProductCategoryRepository productCategoryRepository;
+    @Autowired
+    private WorkflowRepository workflowRepository;
 
     public OrderDto getOrderDtoById(Long orderId) {
         Optional<Order> orderOpt = orderRepository.findById(orderId);
@@ -173,12 +186,19 @@ public class OrderService {
         return order;
     }
 
-    //TODO: generate order code
-    private String generateOrderCode(OrderSouvenirRequest request) {
-        return "";
+    //TODO: follow gifu requirements
+    private String generateOrderCode(Order order) {
+        String token = com.gifu.coreservice.utils.StringUtils.generateReferralCode();
+        long existingCount = orderRepository.countByOrderCode(token);
+        if (existingCount > 0) {
+            generateOrderCode(order);
+        }
+        order.setOrderCode(token);
+        orderRepository.save(order);
+        return token;
     }
 
-    private Customer saveCustomer(OrderSouvenirRequest request) {
+    private Customer saveCustomer(OrderRequest request) {
         CustomerDetailsDto customerDetails = request.getCustomerDetails();
         ShippingDetailsDto shippingDetailsDto = request.getShippingDetails();
         Optional<Customer> existing = customerRepository.findByEmail(customerDetails.getEmail());
@@ -194,7 +214,7 @@ public class OrderService {
         return customerRepository.save(customer);
     }
 
-    private OrderShipping saveOrderShipping(OrderSouvenirRequest request) {
+    private OrderShipping saveOrderShipping(OrderRequest request) {
         ShippingDetailsDto shippingDetails = request.getShippingDetails();
         OrderShipping orderShipping = new OrderShipping();
         orderShipping.setAddress(shippingDetails.getAddress());
@@ -211,80 +231,185 @@ public class OrderService {
         return orderShippingRepository.save(orderShipping);
     }
 
-    private OrderBrideGroom saveOrderBrideGroom(OrderSouvenirRequest request) {
+    private OrderBrideGroom saveOrderBrideGroom(OrderRequest request) {
         OrderBrideGroom orderBrideGroom = new OrderBrideGroom();
-        orderBrideGroom.setBrideName(request.getCustomerDetails().getBrideName());
-        orderBrideGroom.setGroomName(request.getCustomerDetails().getGroomName());
+        orderBrideGroom.setGroomName(request.getBrideGroom().getGroomName());
+        orderBrideGroom.setGroomFather(request.getBrideGroom().getGroomFather());
+        orderBrideGroom.setGroomMother(request.getBrideGroom().getGroomMother());
+        orderBrideGroom.setGroomInstagram(request.getBrideGroom().getGroomInstagram());
+
+        orderBrideGroom.setBrideName(request.getBrideGroom().getBrideName());
+        orderBrideGroom.setBrideFather(request.getBrideGroom().getBrideFather());
+        orderBrideGroom.setBrideMother(request.getBrideGroom().getBrideMother());
+        orderBrideGroom.setBrideInstagram(request.getBrideGroom().getBrideInstagram());
 
         orderBrideGroom.setCreatedDate(ZonedDateTime.now());
         orderBrideGroom.setUpdatedDate(ZonedDateTime.now());
         return orderBrideGroomRepository.save(orderBrideGroom);
     }
 
-//    private Pair<Integer, BigDecimal> calculateQtyAndSubTotal(OrderSouvenirRequest request) throws InvalidRequestException {
-//        Optional<Product> productOpt = productRepository.findById(request.getProductId());
-//        if (productOpt.isEmpty()) {
-//            throw new InvalidRequestException("Product is not existed", null);
-//        }
-//        Product product = productOpt.get();
-//        BigDecimal price = product.getPrice();
-//
-//        List<OrderVariantDto> allVariants = new ArrayList<>(request.getColors());
-//        allVariants.addAll(request.getPackagingColors());
-//        allVariants.add(request.getPackaging());
-//        allVariants.add(request.getAdditionalVariant());
-//        allVariants.add(request.getEmboss());
-//        allVariants.add(request.getSize());
-//        allVariants.add(request.getPosition());
-//        allVariants.add(request.getGreetings());
-//        List<ProductVariant> productVariants = productVariantRepository.findByProductId(product.getId());
-//        for (ProductVariant master : productVariants) {
-//            if(master.getVariantId()!=null){
-//                List<OrderVariantDto> variant = allVariants.stream().filter(var -> var.getVariantId().equals(master.getVariantId())).collect(Collectors.toList());
-//                if(variant.isEmpty()){
-//                    continue;
-//                }
-//            }
-//            if(master.getPairVariantId()!=null){
-//                List<OrderVariantDto> variant = allVariants.stream().filter(var -> var.getVariantId().equals(master.getVariantId())).collect(Collectors.toList());
-//                if(variant.isEmpty()){
-//                    continue;
-//                }
-//            }
-//
-//        }
-//
-//
-//        int qty = 0;
-//
-//
-//        return qty;
-//    }
+    private void saveOrderVariant(OrderRequest request, Order order) throws InvalidRequestException {
+        for (OrderVariantDto requestVariant : request.getVariants()) {
+            Optional<Variant> masterOpt = variantRepository.findById(requestVariant.getVariantId());
+            if (masterOpt.isEmpty()) {
+                throw new InvalidRequestException("Invalid Variant Id");
+            }
+            Optional<Content> masterContentOpt = contentRepository.findById(requestVariant.getContentId());
+            if (masterContentOpt.isEmpty()) {
+                throw new InvalidRequestException("Invalid Variant Id");
+            }
+            Content masterContent = masterContentOpt.get();
+            Variant master = masterOpt.get();
+            OrderVariant orderVariant = new OrderVariant();
+            orderVariant.setOrderId(order.getId());
+            orderVariant.setVariantId(requestVariant.getVariantId());
+            orderVariant.setVariantTypeCode(requestVariant.getVariantTypeCode());
+            orderVariant.setVariantName(master.getName());
+            orderVariant.setContentId(requestVariant.getContentId());
+            orderVariant.setVariantContentName(masterContent.getName());
+            orderVariant.setVariantContentPicture(masterContent.getPicture());
+            orderVariant.setOrderVariantPriceId(null);
+            orderVariant.setCreatedDate(ZonedDateTime.now());
+            orderVariant.setUpdatedDate(ZonedDateTime.now());
+            orderVariantRepository.save(orderVariant);
+            if (StringUtils.hasText(requestVariant.getAdditionalInfoValue())) {
+                OrderVariantInfo orderVariantInfo = new OrderVariantInfo();
+                orderVariantInfo.setOrderId(order.getId());
+                orderVariantInfo.setOrderVariantId(orderVariant.getId());
+                orderVariantInfo.setValue(requestVariant.getAdditionalInfoValue());
+                orderVariantInfo.setKey(requestVariant.getAdditionalInfoKey());
+                orderVariantInfo.setCreatedDate(ZonedDateTime.now());
+                orderVariantInfo.setUpdatedDate(ZonedDateTime.now());
+                orderVariantInfoRepository.save(orderVariantInfo);
+            }
+        }
+    }
 
-    //TODO: create addToCartSouvenir
-//    @Transactional
-//    public InvoiceSouvenirDto addToCartSouvenir(OrderSouvenirRequest request) {
-//        Order order = new Order();
-//        order.setOrderCode(generateOrderCode(request));
-//
-//        Customer customer = saveCustomer(request);
-//        order.setCustomerId(customer.getId());
-//        order.setCustomerEmail(customer.getEmail());
-//        order.setCustomerPhoneNo(customer.getPhoneNumber());
-//
-//        Optional<Product> productOpt = productRepository.findById(request.getProductId());
-//        if (productOpt.isPresent()) {
-//            order.setProductCode(productOpt.get().getProductCode());
-//            order.setProductType(productOpt.get().getProductType());
-//        }
-//
-//        order.setStatus(OrderStatus.IN_CART.name());
-//        OrderShipping orderShipping = saveOrderShipping(request);
-//        order.setOrderShippingId(orderShipping.getId());
-//        OrderBrideGroom orderBrideGroom = saveOrderBrideGroom(request);
-//        order.setOrderBrideGroomId(orderBrideGroom.getId());
-//
-//        order.setQuantity(countQty(request));
-//        return null;
-//    }
+    private BigDecimal calculateTotalVariantPrice(OrderRequest request, Order order) {
+        List<ProductVariantPrice> productVariantPrices = productVariantPriceRepository.findByProductId(request.getProductId());
+        Set<Long> selectedVariantIds = request.getVariants().stream().map(OrderVariantDto::getVariantId).collect(Collectors.toSet());
+        BigDecimal totalVariantPrice = BigDecimal.ZERO;
+        for (ProductVariantPrice it : productVariantPrices) {
+            List<Long> variantIds = Arrays.stream(it.getVariantIds().split(",")).collect(Collectors.toList()).stream().map(Long::valueOf).collect(Collectors.toList());
+            if (selectedVariantIds.containsAll(variantIds)) {
+                variantIds.forEach(selectedVariantIds::remove);
+                OrderVariantPrice orderVariantPrice = new OrderVariantPrice();
+                orderVariantPrice.setPrice(it.getPrice());
+                orderVariantPrice.setOrderId(order.getId());
+                orderVariantPriceRepository.save(orderVariantPrice);
+                totalVariantPrice = totalVariantPrice.add(it.getPrice());
+                for (Long variantId : variantIds) {
+                    Optional<OrderVariant> orderVariantOpt = orderVariantRepository.findByOrderIdAndVariantId(order.getId(), variantId);
+                    if (orderVariantOpt.isPresent()) {
+                        OrderVariant orderVariant = orderVariantOpt.get();
+                        orderVariant.setOrderVariantPriceId(orderVariantPrice.getId());
+                        orderVariantRepository.save(orderVariant);
+                    }
+                }
+            }
+        }
+
+        return totalVariantPrice;
+    }
+
+    private void calculateTotalPrice(OrderRequest request, Order order) throws InvalidRequestException {
+        Optional<Product> productOpt = productRepository.findById(request.getProductId());
+        if (productOpt.isEmpty()) {
+            throw new InvalidRequestException("Product is not existed");
+        }
+        Product product = productOpt.get();
+        List<PricingRange> pricingRanges = pricingRangeRepository.findByProductId(product.getId());
+        BigDecimal productPrice = null;
+        for (PricingRange it : pricingRanges) {
+            if (request.getQuantity() >= it.getQtyMin()) {
+                if ((it.getQtyMax() == null) || (it.getQtyMax() != null && request.getQuantity() <= it.getQtyMax())) {
+                    productPrice = it.getPrice();
+                    break;
+                }
+            }
+        }
+        if (productPrice == null) {
+            throw new InvalidRequestException("Invalid quantity");
+        }
+        order.setProductPrice(productPrice);
+        BigDecimal totalVariantPrice = calculateTotalVariantPrice(request, order);
+        order.setVariantPrice(totalVariantPrice);
+        BigDecimal price = totalVariantPrice.add(productPrice);
+        order.setSubTotal(price.multiply(BigDecimal.valueOf(order.getQuantity())));
+        order.setGrandTotal(order.getSubTotal());
+    }
+
+    private void setWorkflowId(Product product, Order order) throws InvalidRequestException {
+        Optional<ProductCategory> productCategoryOpt = productCategoryRepository.findById(product.getProductCategoryId());
+        if (productCategoryOpt.isEmpty()) {
+            throw new InvalidRequestException("Product category id is not existed");
+        }
+        ProductCategory productCategory = productCategoryOpt.get();
+        if (!StringUtils.hasText(productCategory.getWorkflowCode())) {
+            throw new InvalidRequestException("Product is not related with any workflow");
+        }
+        Optional<Workflow> workflowOpt = workflowRepository.findByWorkflowCodeAndIsDeleted(productCategory.getWorkflowCode(), false);
+        if (workflowOpt.isEmpty()) {
+            throw new InvalidRequestException("Product is not related with any workflow");
+        }
+        order.setWorkflowId(workflowOpt.get().getId());
+    }
+
+    private void saveEventDetail(OrderRequest request, Order order) {
+        for (OrderEventDetailDto event : request.getEventDetail()) {
+            OrderEventDetail orderEventDetail = new OrderEventDetail();
+            orderEventDetail.setOrderId(order.getId());
+            orderEventDetail.setName(event.getName());
+            orderEventDetail.setVenue(event.getVenue());
+            orderEventDetail.setDate(event.getDate());
+            orderEventDetail.setCreatedDate(ZonedDateTime.now());
+            orderEventDetail.setUpdatedDate(ZonedDateTime.now());
+            orderEventDetailRepository.save(orderEventDetail);
+        }
+    }
+
+    @Transactional
+    public Order addToCartSouvenir(OrderRequest request) throws InvalidRequestException {
+        Order order = new Order();
+        order.setOrderCode(generateOrderCode(order));
+        orderRepository.save(order);
+        Customer customer = saveCustomer(request);
+        order.setCustomerId(customer.getId());
+        order.setCustomerName(request.getCustomerDetails().getEmail());
+        order.setCustomerEmail(customer.getEmail());
+        order.setCustomerPhoneNo(customer.getPhoneNumber());
+
+        Optional<Product> productOpt = productRepository.findById(request.getProductId());
+        if (productOpt.isEmpty()) {
+            throw new InvalidRequestException("Invalid product id");
+        }
+        Product product = productOpt.get();
+        order.setProductId(product.getId());
+        order.setProductName(product.getName());
+        order.setProductCode(product.getProductCode());
+        order.setProductType(product.getProductType());
+
+        historicalOrderStatusService.changeStatus(ChangeStatusRequest.builder()
+                .orderId(order.getId())
+                .status(OrderStatus.IN_CART.name())
+                .updaterEmail(SystemConst.SYSTEM.name())
+                .build());
+        OrderShipping orderShipping = saveOrderShipping(request);
+        order.setOrderShippingId(orderShipping.getId());
+        OrderBrideGroom orderBrideGroom = saveOrderBrideGroom(request);
+        order.setOrderBrideGroomId(orderBrideGroom.getId());
+        saveEventDetail(request, order);
+
+        order.setQuantity(request.getQuantity());
+        saveOrderVariant(request, order);
+        calculateTotalPrice(request, order);
+
+        order.setNotes(request.getNotes());
+        order.setCsReferralToken(request.getCsReferralToken());
+        order.setCreatedDate(ZonedDateTime.now());
+        setWorkflowId(product, order);
+        orderRepository.save(order);
+
+        return order;
+    }
 }

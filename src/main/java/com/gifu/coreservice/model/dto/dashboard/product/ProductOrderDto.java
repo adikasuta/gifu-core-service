@@ -1,8 +1,7 @@
-package com.gifu.coreservice.model.dto.order;
+package com.gifu.coreservice.model.dto.dashboard.product;
 
 import com.gifu.coreservice.entity.PricingRange;
 import com.gifu.coreservice.entity.ProductVariantPrice;
-import com.gifu.coreservice.model.dto.ProductVariantViewInputRequestDto;
 import lombok.Builder;
 import lombok.Data;
 

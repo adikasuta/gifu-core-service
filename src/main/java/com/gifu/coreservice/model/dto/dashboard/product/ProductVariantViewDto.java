@@ -1,4 +1,4 @@
-package com.gifu.coreservice.model.dto.order;
+package com.gifu.coreservice.model.dto.dashboard.product;
 
 import com.gifu.coreservice.entity.ProductVariantVisibilityRule;
 import com.gifu.coreservice.enumeration.VariantTypeEnum;

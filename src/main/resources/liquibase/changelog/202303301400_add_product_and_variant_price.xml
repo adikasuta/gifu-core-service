@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet author="suta"  id="202303262207">
+        <addColumn tableName="order_transaction">
+            <column name="product_price" type="decimal(19,2)"/>
+            <column name="variant_price" type="decimal(19,2)"/>
+        </addColumn>
+        <dropColumn tableName="order_variant" columnName="variant_code"/>
+        <dropColumn tableName="order_variant" columnName="variant_content_code"/>
+        <addColumn tableName="order_variant">
+            <column name="variant_id" type="bigint"/>
+            <column name="content_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

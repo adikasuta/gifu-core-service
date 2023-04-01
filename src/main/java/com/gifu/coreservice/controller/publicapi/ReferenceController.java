@@ -4,6 +4,8 @@ import com.gifu.coreservice.enumeration.ProductType;
 import com.gifu.coreservice.enumeration.VariantTypeEnum;
 import com.gifu.coreservice.model.dto.ValueTextDto;
 import com.gifu.coreservice.model.response.SingleResourceResponse;
+import com.gifu.coreservice.service.AdministrativeAreaService;
+import com.gifu.coreservice.service.ProductCategoryService;
 import com.gifu.coreservice.service.ProductVariantService;
 import com.gifu.coreservice.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +24,11 @@ public class ReferenceController {
     @Autowired
     private ProductVariantService productVariantService;
     @Autowired
+    private ProductCategoryService productCategoryService;
+    @Autowired
     private UserService userService;
+    @Autowired
+    private AdministrativeAreaService administrativeAreaService;
 
     @GetMapping("/product-type")
     public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getProductType() {
@@ -56,5 +62,47 @@ public class ReferenceController {
     public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getRoles() {
         List<ValueTextDto> roles = userService.getRolesReference();
         return ResponseEntity.ok(new SingleResourceResponse<>(roles));
+    }
+
+    @GetMapping("/product-categories")
+    public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getProductCategories() {
+        List<ValueTextDto> options = productCategoryService.getProductCategoryOptions();
+        return ResponseEntity.ok(new SingleResourceResponse<>(options));
+    }
+
+    @GetMapping("/provinces")
+    public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getProvinces() {
+        List<ValueTextDto> options = administrativeAreaService.getProvinceReference();
+        return ResponseEntity.ok(new SingleResourceResponse<>(options));
+    }
+    @GetMapping("/provinces/{provinceId}/cities")
+    public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getCities(
+            @PathVariable String provinceId
+    ) {
+        List<ValueTextDto> options = administrativeAreaService.getCityReference(provinceId);
+        return ResponseEntity.ok(new SingleResourceResponse<>(options));
+    }
+
+    @GetMapping("/cities/{cityId}/districts")
+    public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getDistrict(
+            @PathVariable String cityId
+    ) {
+        List<ValueTextDto> options = administrativeAreaService.getDistrictReference(cityId);
+        return ResponseEntity.ok(new SingleResourceResponse<>(options));
+    }
+
+    @GetMapping("/districts/{districtId}/kelurahan")
+    public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getKelurahan(
+            @PathVariable String districtId
+    ) {
+        List<ValueTextDto> options = administrativeAreaService.getKelurahanReference(districtId);
+        return ResponseEntity.ok(new SingleResourceResponse<>(options));
+    }
+
+    @GetMapping("/shipping-vendors")
+    public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getShippingVendors(
+    ) {
+        List<ValueTextDto> options = administrativeAreaService.getShippingVendors();
+        return ResponseEntity.ok(new SingleResourceResponse<>(options));
     }
 }

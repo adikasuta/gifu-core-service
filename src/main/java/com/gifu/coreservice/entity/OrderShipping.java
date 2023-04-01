@@ -28,7 +28,7 @@ public class OrderShipping {
     @Column(name = "postal_code")
     private String postalCode;
     @Column(name = "preferred_shipping_vendor")
-    private Long preferredShippingVendor;
+    private String preferredShippingVendor;
     @Column(name = "use_wooden_crate")
     private Boolean useWoodenCrate;
 

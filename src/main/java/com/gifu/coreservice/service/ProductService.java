@@ -6,8 +6,8 @@ import com.gifu.coreservice.enumeration.SearchOperation;
 import com.gifu.coreservice.enumeration.VariantTypeEnum;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.*;
-import com.gifu.coreservice.model.dto.order.ProductOrderDto;
-import com.gifu.coreservice.model.dto.order.ProductVariantViewDto;
+import com.gifu.coreservice.model.dto.dashboard.product.ProductOrderDto;
+import com.gifu.coreservice.model.dto.dashboard.product.ProductVariantViewDto;
 import com.gifu.coreservice.model.request.SaveProductRequest;
 import com.gifu.coreservice.model.request.SearchProductRequest;
 import com.gifu.coreservice.repository.*;
@@ -27,7 +27,6 @@ import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -239,7 +238,7 @@ public class ProductService {
 
         List<ProductSearchDto> dtoList = new ArrayList<>();
         for (Product it : products.getContent()) {
-            String size = it.getLength() + " X " + it.getWidth() + " X " + it.getHeight();
+            String size = it.getLength() + " x " + it.getWidth() + " x " + it.getHeight();
             ProductSearchDto dto = ProductSearchDto.builder()
                     .id(it.getId())
                     .name(it.getName())

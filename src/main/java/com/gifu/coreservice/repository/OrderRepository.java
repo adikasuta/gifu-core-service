@@ -11,4 +11,5 @@ import java.util.List;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
     List<Order> findByOrderCheckoutId(Long orderCheckoutId);
+    long countByOrderCode(String orderCode);
 }

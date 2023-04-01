@@ -7,6 +7,9 @@ import com.gifu.coreservice.enumeration.VariantTypeEnum;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.SearchProductVariantDto;
 import com.gifu.coreservice.model.dto.ValueTextDto;
+import com.gifu.coreservice.model.dto.dashboard.product.ProductVariantViewDto;
+import com.gifu.coreservice.model.dto.order.product.ContentReferenceDto;
+import com.gifu.coreservice.model.dto.order.product.VariantReferenceDto;
 import com.gifu.coreservice.model.request.SaveVariantContentRequest;
 import com.gifu.coreservice.model.request.SaveVariantRequest;
 import com.gifu.coreservice.model.request.SearchProductVariantRequest;
@@ -44,8 +47,6 @@ public class ProductVariantService {
     @Autowired
     private ProductVariantPriceRepository productVariantPriceRepository;
     @Autowired
-    private VariantTypeRepository variantTypeRepository;
-    @Autowired
     private ProductVariantViewRepository productVariantViewRepository;
     @Autowired
     private ProductVariantVisibilityRuleRepository productVariantVisibilityRuleRepository;
@@ -53,10 +54,40 @@ public class ProductVariantService {
     @Value("${picture.path}")
     private String pictureBasePath;
 
+    public List<VariantReferenceDto> getVariantReferenceByProductId(Long productId){
+        List<ProductVariantView> productVariantViews = productVariantViewRepository.findByProductId(productId);
+        Set<Long> allVariantIdsRelated = new HashSet<>();
+        for(ProductVariantView mapper : productVariantViews){
+            List<Long> variantIds = Arrays.stream(mapper.getVariantIds().split(",")).map(Long::valueOf).collect(Collectors.toList());
+            allVariantIdsRelated.addAll(variantIds);
+        }
+        List<Long> variantList = new ArrayList<>(allVariantIdsRelated);
+        List<Variant> variants = variantRepository.findByIdInAndIsDeleted(variantList, false);
+        return variants.stream().map(var -> {
+            List<Content> contents = contentRepository.findByVariantIdAndIsDeleted(var.getId(), false);
+            List<ContentReferenceDto> contentsDto = contents.stream().map(con ->
+                    ContentReferenceDto.builder()
+                            .id(con.getId())
+                            .variantId(con.getVariantId())
+                            .name(con.getName())
+                            .picture(con.getPicture())
+                            .build()
+            ).collect(Collectors.toList());
+            return VariantReferenceDto.builder()
+                    .id(var.getId())
+                    .variantCode(var.getVariantCode())
+                    .variantTypeCode(var.getVariantTypeCode())
+                    .name(var.getName())
+                    .picture(var.getPicture())
+                    .contents(contentsDto)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
     public List<ValueTextDto> getVariantTypeReference() {
         List<ValueTextDto> types = new ArrayList<>();
         for(VariantTypeEnum item : VariantTypeEnum.values()){
-            types.add(new ValueTextDto(item.name(), item.getText(), item.getMeta()));
+            types.add(new ValueTextDto(item.name(), item.getText()));
         }
         return types;
     }

@@ -8,5 +8,5 @@ import lombok.Data;
 public class SearchProductRequest {
     private String searchQuery;
     private Long productCategoryId;
-    private Long productType;
+    private String productType;
 }

@@ -10,6 +10,6 @@ public class ShippingDetailsDto {
     private String kelurahanId;
     private String postalCode;
     private String address;
-    private Long preferredShippingVendor;
+    private String preferredShippingVendor;
     private Boolean useWoodenCrate;
 }

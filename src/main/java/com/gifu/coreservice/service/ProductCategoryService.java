@@ -4,6 +4,7 @@ import com.gifu.coreservice.entity.ProductCategory;
 import com.gifu.coreservice.enumeration.SearchOperation;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.ProductCategoryDto;
+import com.gifu.coreservice.model.dto.ValueTextDto;
 import com.gifu.coreservice.model.request.SaveProductCategoryRequest;
 import com.gifu.coreservice.repository.ProductCategoryRepository;
 import com.gifu.coreservice.repository.spec.BasicSpec;
@@ -46,6 +47,13 @@ public class ProductCategoryService {
                         .build()).collect(Collectors.toList());
     }
 
+    public List<ValueTextDto> getProductCategoryOptions() {
+        Specification<ProductCategory> notDeleted = new SpecUtils<ProductCategory>().isNotTrue("isDeleted");
+        List<ProductCategory> productCategories = productCategoryRepository.findAll(notDeleted);
+        return productCategories.stream().map(productCategory ->
+                new ValueTextDto(String.valueOf(productCategory.getId()), productCategory.getName())).collect(Collectors.toList());
+    }
+
     public boolean deleteProductCategory(Long id) {
         productCategoryRepository.deleteById(id);
         return true;
@@ -53,12 +61,12 @@ public class ProductCategoryService {
 
     public ProductCategoryDto updateProductCategory(SaveProductCategoryRequest request, MultipartFile pictureFile) throws InvalidRequestException, IOException {
         Optional<ProductCategory> existing = productCategoryRepository.findById(request.getId());
-        if(existing.isEmpty()){
+        if (existing.isEmpty()) {
             throw new InvalidRequestException("Category is not existed");
         }
         FileUtils fileUtils = new FileUtils();
         ProductCategory productCategory = existing.get();
-        if(pictureFile!=null){
+        if (pictureFile != null) {
             String filePath = fileUtils.storeFile(pictureFile, pictureBasePath);
             productCategory.setPicture(filePath);
         }
@@ -81,7 +89,7 @@ public class ProductCategoryService {
     public ProductCategoryDto createProductCategory(SaveProductCategoryRequest request, MultipartFile pictureFile) throws IOException {
         FileUtils fileUtils = new FileUtils();
         ProductCategory productCategory = new ProductCategory();
-        if(pictureFile!=null){
+        if (pictureFile != null) {
             String filePath = fileUtils.storeFile(pictureFile, pictureBasePath);
             productCategory.setPicture(filePath);
         }
