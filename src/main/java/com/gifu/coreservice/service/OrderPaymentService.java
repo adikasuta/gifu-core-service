@@ -1,31 +1,28 @@
 package com.gifu.coreservice.service;
 
-import com.gifu.coreservice.entity.Order;
-import com.gifu.coreservice.entity.OrderCheckout;
-import com.gifu.coreservice.entity.OrderCheckoutPayment;
-import com.gifu.coreservice.entity.Bill;
+import com.gifu.coreservice.entity.*;
 import com.gifu.coreservice.enumeration.*;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.exception.ObjectToJsonStringException;
+import com.gifu.coreservice.model.dto.*;
 import com.gifu.coreservice.model.request.ChangeStatusRequest;
 import com.gifu.coreservice.model.request.CreateVaBillPaymentRequest;
 import com.gifu.coreservice.model.request.OrderCheckoutRequest;
-import com.gifu.coreservice.repository.OrderCheckoutPaymentRepository;
-import com.gifu.coreservice.repository.OrderCheckoutRepository;
-import com.gifu.coreservice.repository.OrderRepository;
-import com.gifu.coreservice.repository.BillRepository;
+import com.gifu.coreservice.repository.*;
 import com.gifu.coreservice.service.paymentscheme.AbstractCreatePaymentScheme;
 import com.gifu.coreservice.service.paymentscheme.CashPaymentSchemeService;
 import com.gifu.coreservice.service.paymentscheme.DownPaymentSchemeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderPaymentService {
@@ -46,6 +43,10 @@ public class OrderPaymentService {
     private BillRepository billRepository;
     @Autowired
     private XenditService xenditService;
+    @Autowired
+    private OrderVariantRepository orderVariantRepository;
+    @Autowired
+    private OrderVariantInfoRepository orderVariantInfoRepository;
 
     private static final String DEFAULT_REMARKS = "PEMBAYARAN KE-";
 
@@ -62,7 +63,25 @@ public class OrderPaymentService {
         return paymentSchemeCreator.createPaymentScheme(orderCheckout);
     }
 
-    //TODO: create get cart item service
+    public List<CartItemDto> getCartItems(String customerEmail){
+        List<Order> orders = orderRepository.findByCustomerEmailAndStatus(customerEmail, OrderStatus.IN_CART.name());
+        return orders.stream().map(it -> CartItemDto.builder()
+                .orderCode(it.getOrderCode())
+                .productName(it.getProductName())
+                .productType(it.getProductType())
+                .quantity(it.getQuantity())
+                .productPrice(it.getProductPrice())
+                .variantPrice(it.getVariantPrice())
+                .subTotal(it.getSubTotal())
+                .shippingFee(it.getShippingFee())
+                .chargeFee(it.getChargeFee())
+                .cashback(it.getCashback())
+                .discount(it.getDiscount())
+                .grandTotal(it.getGrandTotal())
+                .build()
+        ).collect(Collectors.toList());
+    }
+    @Transactional
     public OrderCheckout orderCheckout(OrderCheckoutRequest request) throws InvalidRequestException {
         OrderCheckout orderCheckout = new OrderCheckout();
         orderCheckout.setGrandTotal(BigDecimal.ZERO);
@@ -70,22 +89,26 @@ public class OrderPaymentService {
         orderCheckout.setCreatedDate(ZonedDateTime.now());
         orderCheckoutRepository.save(orderCheckout);
         BigDecimal grandTotal = BigDecimal.ZERO;
-        for (Long id : request.getOrderIds()) {
-            Optional<Order> optOrder = orderRepository.findById(id);
-            if (optOrder.isPresent()) {
-                Order order = optOrder.get();
-                order.setOrderCheckoutId(orderCheckout.getId());
-                order.setStatus(OrderStatus.WAITING_FOR_CONFIRMATION.name());
-                order.setUpdatedDate(ZonedDateTime.now());
-                order.setUpdatedBy(SystemConst.SYSTEM.name());
-                orderRepository.save(order);
-                historicalOrderStatusService.changeStatus(ChangeStatusRequest.builder()
-                        .orderId(order.getId())
-                        .status(OrderStatus.WAITING_FOR_CONFIRMATION.name())
-                        .updaterEmail(SystemConst.SYSTEM.name())
-                        .build());
-                grandTotal = grandTotal.add(order.getGrandTotal());
+        for (String code : request.getOrderCodes()) {
+            Optional<Order> optOrder = orderRepository.findByOrderCode(code);
+            if(optOrder.isEmpty()){
+                throw new InvalidRequestException("Invalid order");
             }
+            Order order = optOrder.get();
+            if(!OrderStatus.IN_CART.name().equals(order.getStatus())){
+                throw new InvalidRequestException("Invalid order");
+            }
+            order.setOrderCheckoutId(orderCheckout.getId());
+            order.setStatus(OrderStatus.WAITING_FOR_CONFIRMATION.name());
+            order.setUpdatedDate(ZonedDateTime.now());
+            order.setUpdatedBy(SystemConst.SYSTEM.name());
+            orderRepository.save(order);
+            historicalOrderStatusService.changeStatus(ChangeStatusRequest.builder()
+                    .orderId(order.getId())
+                    .status(OrderStatus.WAITING_FOR_CONFIRMATION.name())
+                    .updaterEmail(SystemConst.SYSTEM.name())
+                    .build());
+            grandTotal = grandTotal.add(order.getGrandTotal());
         }
         orderCheckout.setGrandTotal(grandTotal);
         orderCheckout.setCreatedDate(ZonedDateTime.now());
@@ -97,12 +120,25 @@ public class OrderPaymentService {
     }
 
     //TODO: write code to show to be created bill list
+
+    void expireBillByOrderCheckoutPaymentId(Long orderCheckoutPaymentId) throws ObjectToJsonStringException {
+        List<Bill> bills = billRepository.findByOrderCheckoutPaymentIdAndStatusIn(orderCheckoutPaymentId, List.of(BillStatus.READY_TO_PAY.name(),BillStatus.PENDING.name()));
+        for(Bill bill : bills){
+            bill.setExpiryDate(ZonedDateTime.now());
+            xenditService.expireBill(bill);
+        }
+    }
+
+
+
+    @Transactional
     public Bill createVaBillPayment(CreateVaBillPaymentRequest request) throws InvalidRequestException, ObjectToJsonStringException {
         Optional<OrderCheckoutPayment> orderCheckoutPaymentOpt = orderCheckoutPaymentRepository.findByOrderCheckoutIdAndSequenceNo(request.getOrderCheckoutId(), request.getSequenceNo());
         if(orderCheckoutPaymentOpt.isEmpty()){
             throw new InvalidRequestException("Order Checkout is not existed", null);
         }
         OrderCheckoutPayment orderCheckoutPayment = orderCheckoutPaymentOpt.get();
+        expireBillByOrderCheckoutPaymentId(orderCheckoutPayment.getId());
         Bill bill = new Bill();
         bill.setOrderCheckoutPaymentId(orderCheckoutPayment.getId());
         bill.setAmount(orderCheckoutPayment.getAmount());

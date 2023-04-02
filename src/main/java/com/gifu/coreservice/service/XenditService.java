@@ -114,6 +114,13 @@ public class XenditService {
         }
     }
 
+    public void expireBill(Bill bill) throws ObjectToJsonStringException {
+        List<XenditClosedVa> relatedVAs = xenditClosedVaRepository.findByBillId(bill.getId());
+        for(XenditClosedVa va : relatedVAs){
+            requestExpireVA(va);
+        }
+    }
+
     private void requestExpireVA(XenditClosedVa xenditClosedVa) throws ObjectToJsonStringException {
         try {
             XenditClient xenditClient = new XenditClient.Builder()

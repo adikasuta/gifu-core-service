@@ -10,5 +10,5 @@ import java.util.Optional;
 @Repository
 public interface OrderVariantRepository extends JpaRepository<OrderVariant, Long> {
     List<OrderVariant> findByOrderId(Long orderId);
-    Optional<OrderVariant> findByOrderIdAndVariantId(Long orderId, Long variantId);
+    List<OrderVariant> findByOrderIdAndVariantId(Long orderId, Long variantId);
 }

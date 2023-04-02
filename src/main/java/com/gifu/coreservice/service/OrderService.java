@@ -92,9 +92,7 @@ public class OrderService {
                 return OrderVariantInfoDto.builder()
                         .id(it.getId())
                         .variantTypeCode(it.getVariantTypeCode())
-//                        .variantCode(it.getVariantCode())
                         .variantName(it.getVariantName())
-//                        .variantContentCode(it.getVariantContentCode())
                         .variantContentName(it.getVariantContentName())
                         .variantContentPicture(it.getVariantContentPicture())
                         .additionalInfo(mappedAdditionalInfo)
@@ -209,9 +207,11 @@ public class OrderService {
             customer.setCreatedDate(ZonedDateTime.now());
         }
         customer.setName(customerDetails.getName());
+        customer.setEmail(customerDetails.getEmail());
         customer.setAddress(shippingDetailsDto.getAddress());
-        customer.setPhoneNumber(customer.getPhoneNumber());
-        return customerRepository.save(customer);
+        customer.setPhoneNumber(customerDetails.getPhoneNumber());
+        customerRepository.save(customer);
+        return customer;
     }
 
     private OrderShipping saveOrderShipping(OrderRequest request) {
@@ -299,9 +299,8 @@ public class OrderService {
                 orderVariantPriceRepository.save(orderVariantPrice);
                 totalVariantPrice = totalVariantPrice.add(it.getPrice());
                 for (Long variantId : variantIds) {
-                    Optional<OrderVariant> orderVariantOpt = orderVariantRepository.findByOrderIdAndVariantId(order.getId(), variantId);
-                    if (orderVariantOpt.isPresent()) {
-                        OrderVariant orderVariant = orderVariantOpt.get();
+                    List<OrderVariant> orderVariants = orderVariantRepository.findByOrderIdAndVariantId(order.getId(), variantId);
+                    for (OrderVariant orderVariant : orderVariants) {
                         orderVariant.setOrderVariantPriceId(orderVariantPrice.getId());
                         orderVariantRepository.save(orderVariant);
                     }
@@ -362,20 +361,37 @@ public class OrderService {
             orderEventDetail.setName(event.getName());
             orderEventDetail.setVenue(event.getVenue());
             orderEventDetail.setDate(event.getDate());
+            orderEventDetail.setTime(event.getTime());
             orderEventDetail.setCreatedDate(ZonedDateTime.now());
             orderEventDetail.setUpdatedDate(ZonedDateTime.now());
             orderEventDetailRepository.save(orderEventDetail);
         }
     }
 
+
     @Transactional
-    public Order addToCartSouvenir(OrderRequest request) throws InvalidRequestException {
+    public Order addToCart(String orderCode) throws InvalidRequestException {
+        Optional<Order> orderOpt = orderRepository.findByOrderCode(orderCode);
+        if (orderOpt.isEmpty()) {
+            throw new InvalidRequestException("Order Code is not valid");
+        }
+        Order order = orderOpt.get();
+        historicalOrderStatusService.changeStatus(ChangeStatusRequest.builder()
+                .orderId(order.getId())
+                .status(OrderStatus.IN_CART.name())
+                .updaterEmail(SystemConst.SYSTEM.name())
+                .build());
+        return order;
+    }
+
+    @Transactional
+    public Order saveToDraft(OrderRequest request) throws InvalidRequestException {
         Order order = new Order();
         order.setOrderCode(generateOrderCode(order));
         orderRepository.save(order);
         Customer customer = saveCustomer(request);
         order.setCustomerId(customer.getId());
-        order.setCustomerName(request.getCustomerDetails().getEmail());
+        order.setCustomerName(customer.getName());
         order.setCustomerEmail(customer.getEmail());
         order.setCustomerPhoneNo(customer.getPhoneNumber());
 
@@ -391,7 +407,7 @@ public class OrderService {
 
         historicalOrderStatusService.changeStatus(ChangeStatusRequest.builder()
                 .orderId(order.getId())
-                .status(OrderStatus.IN_CART.name())
+                .status(OrderStatus.DRAFT.name())
                 .updaterEmail(SystemConst.SYSTEM.name())
                 .build());
         OrderShipping orderShipping = saveOrderShipping(request);
@@ -411,5 +427,70 @@ public class OrderService {
         orderRepository.save(order);
 
         return order;
+    }
+
+    private void setInvoiceShippingAddress(Long orderShippingId, InvoiceDto invoiceDto) throws InvalidRequestException {
+        Optional<OrderShipping> orderShippingOps = orderShippingRepository.findById(orderShippingId);
+        if (orderShippingOps.isEmpty()) {
+            throw new InvalidRequestException("Invalid order");
+        }
+        OrderShipping orderShipping = orderShippingOps.get();
+        Optional<Province> provinceOpt = provinceRepository.findById(orderShipping.getProvinceCode());
+        provinceOpt.ifPresent(it -> invoiceDto.setProvinceName(it.getName()));
+        Optional<City> cityOptional = cityRepository.findById(orderShipping.getCityCode());
+        cityOptional.ifPresent(it -> invoiceDto.setCityName(it.getName()));
+        Optional<District> district = districtRepository.findById(orderShipping.getDistrictCode());
+        district.ifPresent(it -> invoiceDto.setDistrictName(it.getName()));
+        Optional<Kelurahan> kelurahan = kelurahanRepository.findById(orderShipping.getKelurahanCode());
+        kelurahan.ifPresent(it -> invoiceDto.setKelurahanName(it.getName()));
+        invoiceDto.setPostalCode(orderShipping.getPostalCode());
+        invoiceDto.setAddress(orderShipping.getAddress());
+    }
+
+    public InvoiceDto getInvoice(String orderCode) throws InvalidRequestException {
+        Optional<Order> orderOpt = orderRepository.findByOrderCode(orderCode);
+        if (orderOpt.isEmpty()) {
+            throw new InvalidRequestException("Invalid order code");
+        }
+        Order order = orderOpt.get();
+
+        List<OrderVariant> orderVariants = orderVariantRepository.findByOrderId(order.getId());
+        List<InvoiceVariantDto> orderVariantDto = orderVariants.stream().map(it -> {
+            List<OrderVariantInfo> infos = orderVariantInfoRepository.findByOrderVariantId(it.getId());
+            return InvoiceVariantDto.builder()
+                    .variantTypeCode(it.getVariantTypeCode())
+                    .variantName(it.getVariantName())
+                    .contentName(it.getVariantContentName())
+                    .additionalInfo(infos.stream().map(info -> KeyValueDto
+                            .builder()
+                            .key(info.getKey())
+                            .value(info.getValue()).build()).collect(Collectors.toList()))
+                    .build();
+        }).collect(Collectors.toList());
+        InvoiceDto invoiceDto = InvoiceDto.builder()
+                .status(order.getStatus())
+                .orderCode(order.getOrderCode())
+                .productName(order.getProductName())
+                .productTypeCode(order.getProductType())
+                .notes(order.getNotes())
+                .customerName(order.getCustomerName())
+                .customerEmail(order.getCustomerEmail())
+                .customerPhoneNo(order.getCustomerPhoneNo())
+                .quantity(order.getQuantity())
+                .productPrice(order.getProductPrice())
+                .variantPrice(order.getVariantPrice())
+                .subTotal(order.getSubTotal())
+                .shippingFee(order.getShippingFee())
+                .chargeFee(order.getChargeFee())
+                .cashback(order.getCashback())
+                .discount(order.getDiscount())
+                .grandTotal(order.getGrandTotal())
+                .createdDate(order.getCreatedDate())
+                .checkoutDate(order.getCheckoutDate())
+                .variants(orderVariantDto)
+                .build();
+
+        setInvoiceShippingAddress(order.getOrderShippingId(), invoiceDto);
+        return invoiceDto;
     }
 }

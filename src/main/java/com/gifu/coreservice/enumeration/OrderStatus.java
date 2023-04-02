@@ -1,6 +1,7 @@
 package com.gifu.coreservice.enumeration;
 
 public enum OrderStatus {
+    DRAFT,
     IN_CART,
     WAITING_FOR_CONFIRMATION,
     WAITING_TO_CREATE_BILL,

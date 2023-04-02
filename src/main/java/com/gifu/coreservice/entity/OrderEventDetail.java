@@ -3,6 +3,8 @@ package com.gifu.coreservice.entity;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZonedDateTime;
 
 @Entity
@@ -20,7 +22,9 @@ public class OrderEventDetail {
     @Column(name = "venue")
     private String venue;
     @Column(name = "date")
-    private ZonedDateTime date;
+    private LocalDate date;
+    @Column(name = "time")
+    private LocalTime time;
 
     @Column(name = "created_date")
     private ZonedDateTime createdDate;
