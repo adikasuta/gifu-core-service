@@ -47,6 +47,8 @@ public class OrderPaymentService {
     private OrderVariantRepository orderVariantRepository;
     @Autowired
     private OrderVariantInfoRepository orderVariantInfoRepository;
+    @Autowired
+    private ProductRepository productRepository;
 
     private static final String DEFAULT_REMARKS = "PEMBAYARAN KE-";
 
@@ -63,24 +65,29 @@ public class OrderPaymentService {
         return paymentSchemeCreator.createPaymentScheme(orderCheckout);
     }
 
-    public List<CartItemDto> getCartItems(String customerEmail){
+    public List<CartItemDto> getCartItems(String customerEmail) {
         List<Order> orders = orderRepository.findByCustomerEmailAndStatus(customerEmail, OrderStatus.IN_CART.name());
-        return orders.stream().map(it -> CartItemDto.builder()
-                .orderCode(it.getOrderCode())
-                .productName(it.getProductName())
-                .productType(it.getProductType())
-                .quantity(it.getQuantity())
-                .productPrice(it.getProductPrice())
-                .variantPrice(it.getVariantPrice())
-                .subTotal(it.getSubTotal())
-                .shippingFee(it.getShippingFee())
-                .chargeFee(it.getChargeFee())
-                .cashback(it.getCashback())
-                .discount(it.getDiscount())
-                .grandTotal(it.getGrandTotal())
-                .build()
-        ).collect(Collectors.toList());
+        return orders.stream().map(it -> {
+            Optional<Product> productOpt = productRepository.findById(it.getProductId());
+            CartItemDto dto = CartItemDto.builder()
+                    .orderCode(it.getOrderCode())
+                    .productName(it.getProductName())
+                    .productType(it.getProductType())
+                    .quantity(it.getQuantity())
+                    .productPrice(it.getProductPrice())
+                    .variantPrice(it.getVariantPrice())
+                    .subTotal(it.getSubTotal())
+                    .shippingFee(it.getShippingFee())
+                    .chargeFee(it.getChargeFee())
+                    .cashback(it.getCashback())
+                    .discount(it.getDiscount())
+                    .grandTotal(it.getGrandTotal())
+                    .build();
+            productOpt.ifPresent(prod -> dto.setProductImage(prod.getPicture()));
+            return dto;
+        }).collect(Collectors.toList());
     }
+
     @Transactional
     public OrderCheckout orderCheckout(OrderCheckoutRequest request) throws InvalidRequestException {
         OrderCheckout orderCheckout = new OrderCheckout();
@@ -91,11 +98,11 @@ public class OrderPaymentService {
         BigDecimal grandTotal = BigDecimal.ZERO;
         for (String code : request.getOrderCodes()) {
             Optional<Order> optOrder = orderRepository.findByOrderCode(code);
-            if(optOrder.isEmpty()){
+            if (optOrder.isEmpty()) {
                 throw new InvalidRequestException("Invalid order");
             }
             Order order = optOrder.get();
-            if(!OrderStatus.IN_CART.name().equals(order.getStatus())){
+            if (!OrderStatus.IN_CART.name().equals(order.getStatus())) {
                 throw new InvalidRequestException("Invalid order");
             }
             order.setOrderCheckoutId(orderCheckout.getId());
@@ -122,19 +129,18 @@ public class OrderPaymentService {
     //TODO: write code to show to be created bill list
 
     void expireBillByOrderCheckoutPaymentId(Long orderCheckoutPaymentId) throws ObjectToJsonStringException {
-        List<Bill> bills = billRepository.findByOrderCheckoutPaymentIdAndStatusIn(orderCheckoutPaymentId, List.of(BillStatus.READY_TO_PAY.name(),BillStatus.PENDING.name()));
-        for(Bill bill : bills){
+        List<Bill> bills = billRepository.findByOrderCheckoutPaymentIdAndStatusIn(orderCheckoutPaymentId, List.of(BillStatus.READY_TO_PAY.name(), BillStatus.PENDING.name()));
+        for (Bill bill : bills) {
             bill.setExpiryDate(ZonedDateTime.now());
             xenditService.expireBill(bill);
         }
     }
 
 
-
     @Transactional
     public Bill createVaBillPayment(CreateVaBillPaymentRequest request) throws InvalidRequestException, ObjectToJsonStringException {
         Optional<OrderCheckoutPayment> orderCheckoutPaymentOpt = orderCheckoutPaymentRepository.findByOrderCheckoutIdAndSequenceNo(request.getOrderCheckoutId(), request.getSequenceNo());
-        if(orderCheckoutPaymentOpt.isEmpty()){
+        if (orderCheckoutPaymentOpt.isEmpty()) {
             throw new InvalidRequestException("Order Checkout is not existed", null);
         }
         OrderCheckoutPayment orderCheckoutPayment = orderCheckoutPaymentOpt.get();
@@ -144,15 +150,15 @@ public class OrderPaymentService {
         bill.setAmount(orderCheckoutPayment.getAmount());
         bill.setCreatedDate(ZonedDateTime.now());
         bill.setExpiryDate(ZonedDateTime.now().plusDays(1));
-        bill.setRemarks(DEFAULT_REMARKS+request.getSequenceNo());
+        bill.setRemarks(DEFAULT_REMARKS + request.getSequenceNo());
         bill.setStatus(BillStatus.PENDING.name());
         bill.setCreatedBy(request.getCreatedBy());
         bill.setPaymentPartner(PaymentPartner.XENDIT.name());//possible to change/add another payment partner in future
         billRepository.save(bill);
         xenditService.createVaClose(bill);//possible to change/add another payment partner in future
-        if(request.getSequenceNo() == 1){
+        if (request.getSequenceNo() == 1) {
             List<Order> orders = orderRepository.findByOrderCheckoutId(orderCheckoutPayment.getOrderCheckoutId());
-            for(Order order : orders){
+            for (Order order : orders) {
                 historicalOrderStatusService.changeStatus(ChangeStatusRequest.builder()
                         .orderId(order.getId())
                         .status(OrderStatus.WAITING_FOR_PAYMENT.name())
