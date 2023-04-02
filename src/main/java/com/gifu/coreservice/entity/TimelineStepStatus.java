@@ -17,6 +17,8 @@ public class TimelineStepStatus {
     private Long timelineStepId;
     @Column(name = "status_id")
     private Long statusId;
+    @Column(name = "status_name")
+    private String statusName;
 
     @Column(name = "created_date")
     private ZonedDateTime createdDate;

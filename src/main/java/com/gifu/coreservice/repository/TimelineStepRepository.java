@@ -12,4 +12,6 @@ import java.util.List;
 public interface TimelineStepRepository extends JpaRepository<TimelineStep, Long> {
     @Query("FROM TimelineStep WHERE timelineId = :timelineId")
     List<TimelineStep> findTimelineStepByTimelineIdWithPageable(Long timelineId, Pageable pageable);
+
+    List<TimelineStep> findByTimelineId(Long timelineId);
 }

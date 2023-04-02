@@ -4,12 +4,15 @@ import com.gifu.coreservice.entity.*;
 import com.gifu.coreservice.enumeration.OrderStatus;
 import com.gifu.coreservice.enumeration.PermissionEnum;
 import com.gifu.coreservice.exception.InvalidRequestException;
+import com.gifu.coreservice.model.dto.ProgressTrackerDto;
 import com.gifu.coreservice.model.dto.StepStatusTodoDto;
 import com.gifu.coreservice.model.dto.StepTodoDto;
+import com.gifu.coreservice.model.dto.TimelineTrackerDto;
 import com.gifu.coreservice.model.request.ChangeStatusRequest;
 import com.gifu.coreservice.model.request.UpdateStepStatusRequest;
 import com.gifu.coreservice.repository.*;
 import com.gifu.coreservice.utils.SortUtils;
+import liquibase.pro.packaged.P;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
@@ -18,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import javax.swing.text.html.Option;
 import javax.transaction.Transactional;
 import java.io.OptionalDataException;
 import java.sql.Time;
@@ -57,7 +61,51 @@ public class TimelineService {
 
     private static final String SYSTEM = "SYSTEM";
 
-    private TimelineStep getCurrentTimelineStep(Long timelineId){
+    public ProgressTrackerDto trackOrder(String orderCode, String phoneNumber) throws InvalidRequestException {
+        Optional<Order> orderOpt = orderRepository.findByOrderCode(orderCode);
+        if (orderOpt.isEmpty()) {
+            throw new InvalidRequestException("Order code="+orderCode+" is not valid");
+        }
+        Order order = orderOpt.get();
+        if(!phoneNumber.equals(order.getCustomerPhoneNo())){
+            throw new InvalidRequestException("Order code="+orderCode+" is not valid");
+        }
+        List<TimelineTrackerDto> steps = new ArrayList<>();
+        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("id").ascending());
+
+        List<HistoricalOrderStatus> historicalStatus = historicalOrderStatusService.findByOrderId(order.getId(), pageable);
+        for (HistoricalOrderStatus it : historicalStatus) {
+            steps.add(TimelineTrackerDto.builder()
+                    .stepName("Preparation")
+                    .lastStatus(it.getStatus())
+                    .createdDate(it.getCreatedDate())
+                    .build());
+        }
+
+        List<Timeline> timelineList = timelineRepository.findByOrderId(order.getId());//it should be only one
+        if (!timelineList.isEmpty()) {
+
+            List<TimelineStep> timelineSteps = timelineStepRepository.findTimelineStepByTimelineIdWithPageable(timelineList.get(0).getId(), pageable);
+            for (TimelineStep it : timelineSteps) {
+                TimelineTrackerDto step = TimelineTrackerDto.builder()
+                        .stepName(it.getStepName())
+                        .createdDate(it.getCreatedDate())
+                        .build();
+                TimelineStepStatus lastStatus = this.getCurrentTimelineStepStatus(it.getId());
+                if (lastStatus != null) {
+                    step.setLastStatus(lastStatus.getStatusName());
+                }
+                steps.add(step);
+            }
+        }
+
+        return ProgressTrackerDto.builder()
+                .lastOrderStatus(order.getStatus())
+                .timeline(steps)
+                .build();
+    }
+
+    private TimelineStep getCurrentTimelineStep(Long timelineId) {
         Pageable pageable = PageRequest.of(0, 1, Sort.by("id").descending());
         List<TimelineStep> steps = timelineStepRepository.findTimelineStepByTimelineIdWithPageable(timelineId, pageable);
         if (steps.isEmpty()) {
@@ -66,7 +114,7 @@ public class TimelineService {
         return steps.get(0);
     }
 
-    private TimelineStepStatus getCurrentTimelineStepStatus(Long timelineStepId){
+    private TimelineStepStatus getCurrentTimelineStepStatus(Long timelineStepId) {
         Pageable pageable = PageRequest.of(0, 1, Sort.by("id").descending());
         List<TimelineStepStatus> timelineStepStatuses = timelineStepStatusRepository.findByTimelineStepIdWithPageable(timelineStepId, pageable);
         if (timelineStepStatuses.isEmpty()) {
@@ -79,57 +127,58 @@ public class TimelineService {
     public void handleChangeStepStatus(UpdateStepStatusRequest request, User requester) throws InvalidRequestException {
         boolean isApprover = userService.hasPermission(PermissionEnum.APPROVE_STEP_STATUS, requester.getId());
         Optional<Timeline> timelineOpt = timelineRepository.findById(request.getTimelineId());
-        if(timelineOpt.isEmpty()){
-            throw new InvalidRequestException("Timeline (id="+request.getTimelineId()+") is not found");
+        if (timelineOpt.isEmpty()) {
+            throw new InvalidRequestException("Timeline (id=" + request.getTimelineId() + ") is not found");
         }
         Timeline timeline = timelineOpt.get();
         TimelineStep currentStep = getCurrentTimelineStep(timeline.getId());
         if (currentStep == null) {
-            throw new InvalidRequestException("Timeline (id="+request.getTimelineId()+") has no started yet");
+            throw new InvalidRequestException("Timeline (id=" + request.getTimelineId() + ") has no started yet");
         }
-        if(!currentStep.getStepId().equals(request.getCurrentStepId())){
-            throw new InvalidRequestException("Timeline (id="+request.getTimelineId()+") step is not synced with request");
+        if (!currentStep.getStepId().equals(request.getCurrentStepId())) {
+            throw new InvalidRequestException("Timeline (id=" + request.getTimelineId() + ") step is not synced with request");
         }
         Optional<Step> masterStepOpt = stepRepository.findById(currentStep.getStepId());
-        if(masterStepOpt.isEmpty()){
-            throw new InvalidRequestException("Timeline (id="+request.getTimelineId()+") step is not existed");
+        if (masterStepOpt.isEmpty()) {
+            throw new InvalidRequestException("Timeline (id=" + request.getTimelineId() + ") step is not existed");
         }
         Step masterStep = masterStepOpt.get();
-        if (!masterStep.getDefaultAssignedUserId().equals(requester.getId())){
-            if(masterStep.getNeedApproval() && !isApprover){
-                throw new InvalidRequestException("Update request for Timeline (id="+request.getTimelineId()+") is initialized by unauthorized user");
+        if (!masterStep.getDefaultAssignedUserId().equals(requester.getId())) {
+            if (masterStep.getNeedApproval() && !isApprover) {
+                throw new InvalidRequestException("Update request for Timeline (id=" + request.getTimelineId() + ") is initialized by unauthorized user");
             }
         }
         TimelineStepStatus currentStepStatus = getCurrentTimelineStepStatus(currentStep.getId());
-        if(currentStepStatus==null){
-            throw new InvalidRequestException("Timeline (id="+request.getTimelineId()+") step status is not existed");
+        if (currentStepStatus == null) {
+            throw new InvalidRequestException("Timeline (id=" + request.getTimelineId() + ") step status is not existed");
         }
         Optional<Status> statusOpt = statusRepository.findById(currentStepStatus.getStatusId());
-        if(statusOpt.isEmpty()){
-            throw new InvalidRequestException("Timeline (id="+request.getTimelineId()+") step status is not existed");
+        if (statusOpt.isEmpty()) {
+            throw new InvalidRequestException("Timeline (id=" + request.getTimelineId() + ") step status is not existed");
         }
         Status status = statusOpt.get();
-        if(status.getNextStatusId() == null){
-            throw new InvalidRequestException("Timeline (id="+request.getTimelineId()+") step already finished");
+        if (status.getNextStatusId() == null) {
+            throw new InvalidRequestException("Timeline (id=" + request.getTimelineId() + ") step already finished");
         }
 
         Optional<Status> newStatusOpt = statusRepository.findById(request.getNewStatusId());
-        if(newStatusOpt.isEmpty()){
-            throw new InvalidRequestException("Timeline (id="+request.getTimelineId()+") new step status is not existed");
+        if (newStatusOpt.isEmpty()) {
+            throw new InvalidRequestException("Timeline (id=" + request.getTimelineId() + ") new step status is not existed");
         }
         Status newStatus = newStatusOpt.get();
         TimelineStepStatus newTimelineStepStatus = new TimelineStepStatus();
         newTimelineStepStatus.setStatusId(request.getNewStatusId());
         newTimelineStepStatus.setTimelineStepId(currentStep.getStepId());
         newTimelineStepStatus.setCreatedDate(ZonedDateTime.now());
+        newTimelineStepStatus.setStatusName(newStatus.getName());
         newTimelineStepStatus.setCreatedBy(requester.getEmail());
         timelineStepStatusRepository.save(newTimelineStepStatus);
-        if(newStatus.getNextStatusId() == null){
+        if (newStatus.getNextStatusId() == null) {
             initiateNextStep(timeline, requester);
         }
     }
 
-    private void generateNewTimelineStep(Long timelineId, Step stepMaster, String createdBy){
+    private void generateNewTimelineStep(Long timelineId, Step stepMaster, String createdBy) {
         TimelineStep timelineStep = new TimelineStep();
         timelineStep.setTimelineId(timelineId);
         timelineStep.setStepId(stepMaster.getId());
@@ -153,14 +202,14 @@ public class TimelineService {
     private void initiateNextStep(Timeline timeline, User requester) throws InvalidRequestException {
         TimelineStep currentStep = getCurrentTimelineStep(timeline.getId());
         if (currentStep == null) {
-            throw new InvalidRequestException("Timeline (id="+timeline.getId()+") has no started yet");
+            throw new InvalidRequestException("Timeline (id=" + timeline.getId() + ") has no started yet");
         }
         Optional<Step> stepMasterOpt = stepRepository.findById(currentStep.getStepId());
-        if(stepMasterOpt.isEmpty()){
-            throw new InvalidRequestException("Timeline (id="+timeline.getId()+") step is invalid");
+        if (stepMasterOpt.isEmpty()) {
+            throw new InvalidRequestException("Timeline (id=" + timeline.getId() + ") step is invalid");
         }
         Step currentStepMaster = stepMasterOpt.get();
-        if(currentStepMaster.getNextStepId()==null){
+        if (currentStepMaster.getNextStepId() == null) {
             historicalOrderStatusService.changeStatus(ChangeStatusRequest.builder()
                     .orderId(timeline.getOrderId())
                     .status(OrderStatus.DONE.name())
@@ -169,8 +218,8 @@ public class TimelineService {
             return;
         }
         Optional<Step> newStepMasterOpt = stepRepository.findById(currentStepMaster.getNextStepId());
-        if(newStepMasterOpt.isEmpty()){
-            throw new InvalidRequestException("Timeline (id="+timeline.getId()+") step is invalid");
+        if (newStepMasterOpt.isEmpty()) {
+            throw new InvalidRequestException("Timeline (id=" + timeline.getId() + ") step is invalid");
         }
         Step newStepMaster = newStepMasterOpt.get();
         generateNewTimelineStep(timeline.getId(), newStepMaster, requester.getEmail());
@@ -222,7 +271,7 @@ public class TimelineService {
         return stepTodoList;
     }
 
-    private List<Status> getModifiableStatus(Status currentStatus, TimelineStep currentStep){
+    private List<Status> getModifiableStatus(Status currentStatus, TimelineStep currentStep) {
         List<Status> statuses = new ArrayList<>();
         List<Status> allStatus = statusRepository.findByStepId(currentStep.getStepId());
         allStatus.sort(SortUtils.orderFlowFromTop());
@@ -284,13 +333,15 @@ public class TimelineService {
             generateNewTimelineStep(timeline.getId(), firstStep, SYSTEM);
 
             try {
+                item.setFirstPaymentDate(ZonedDateTime.now());
+                orderRepository.save(item);
                 historicalOrderStatusService.changeStatus(ChangeStatusRequest.builder()
                         .orderId(item.getId())
                         .status(OrderStatus.IN_PROGRESS_PRODUCTION.name())
                         .updaterEmail(SYSTEM)
                         .build());
             } catch (InvalidRequestException e) {
-                log.error("ERROR when update order status:"+e.getMessage(), e);
+                log.error("ERROR when update order status:" + e.getMessage(), e);
             }
         }
 

@@ -126,12 +126,14 @@ public class OrderService {
             DashboardOrderDto result = DashboardOrderDto.builder()
                     .id(it.getId())
                     .orderCode(it.getOrderCode())
+                    .productType(it.getProductType())
+                    .customerName(it.getCustomerName())
+                    .productName(it.getProductName())
+                    .quantity(it.getQuantity())
                     .deadline(it.getDeadline())
                     .grandTotal(it.getGrandTotal())
-                    .customerName(it.getCustomerName())
-                    .quantity(it.getQuantity())
-                    .paymentDate(null)//TODO
-                    .eventDate(null)//TODO
+                    .status(it.getStatus())
+                    .paymentDate(it.getFirstPaymentDate())
                     .build();
             Optional<Product> product = productRepository.findById(it.getProductId());
             product.ifPresent(value -> result.setProductName(value.getName()));
@@ -157,7 +159,6 @@ public class OrderService {
         return orderCheckoutRepository.save(orderCheckout);
     }
 
-    //TODO: write code to show to be confirm list
     public Order confirmOrder(ConfirmOrderRequest request) throws InvalidRequestException {
         Optional<Order> orderOpt = orderRepository.findById(request.getOrderId());
         if (orderOpt.isEmpty()) {

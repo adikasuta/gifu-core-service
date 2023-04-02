@@ -7,9 +7,11 @@ import com.gifu.coreservice.model.request.ChangeStatusRequest;
 import com.gifu.coreservice.repository.HistoricalOrderStatusRepository;
 import com.gifu.coreservice.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -20,10 +22,14 @@ public class HistoricalOrderStatusService {
     @Autowired
     private OrderRepository orderRepository;
 
+    public List<HistoricalOrderStatus> findByOrderId(Long orderId, Pageable pageable) {
+        return historicalOrderStatusRepository.findByOrderId(orderId, pageable);
+    }
+
     public HistoricalOrderStatus changeStatus(ChangeStatusRequest request) throws InvalidRequestException {
         Optional<Order> orderOpt = orderRepository.findById(request.getOrderId());
-        if(orderOpt.isEmpty()){
-            throw new InvalidRequestException("Order is not existed",null);
+        if (orderOpt.isEmpty()) {
+            throw new InvalidRequestException("Order is not existed", null);
         }
         Order order = orderOpt.get();
         order.setStatus(request.getStatus());

@@ -92,6 +92,10 @@ public class XenditService {
         return generatedVa;
     }
 
+    public List<XenditClosedVa> findByBillId(Long billId){
+        return xenditClosedVaRepository.findByBillId(billId);
+    }
+
     @Transactional
     public void createVaClose(Bill bill) throws ObjectToJsonStringException {
         String vaNumber = generateVaNumber();

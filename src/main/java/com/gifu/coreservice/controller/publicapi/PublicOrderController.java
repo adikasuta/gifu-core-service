@@ -3,10 +3,12 @@ package com.gifu.coreservice.controller.publicapi;
 import com.gifu.coreservice.entity.Order;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.CartItemDto;
+import com.gifu.coreservice.model.dto.CustomerSessionDto;
 import com.gifu.coreservice.model.dto.InvoiceDto;
 import com.gifu.coreservice.model.request.OrderCheckoutRequest;
 import com.gifu.coreservice.model.request.OrderRequest;
 import com.gifu.coreservice.model.response.SingleResourceResponse;
+import com.gifu.coreservice.service.ObjectMapperService;
 import com.gifu.coreservice.service.OrderPaymentService;
 import com.gifu.coreservice.service.OrderService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +32,10 @@ public class PublicOrderController {
     private OrderService orderService;
     @Autowired
     private OrderPaymentService orderPaymentService;
+    @Autowired
+    private ObjectMapperService objectMapperService;
 
-    private static final String CUSTOMER_EMAIL_HEADER_KEY = "session_customer";
+    private static final String CUSTOMER_EMAIL_HEADER_KEY = "client_gifu";
 
     @PostMapping
     public ResponseEntity<SingleResourceResponse<Map<String,String>>> postOrder(
@@ -78,11 +82,12 @@ public class PublicOrderController {
             HttpServletRequest request
     ) {
         try {
-            String customerEmail = request.getHeader(CUSTOMER_EMAIL_HEADER_KEY);
-            if (!StringUtils.hasText(customerEmail)) {
+            String customerSession = request.getHeader(CUSTOMER_EMAIL_HEADER_KEY);
+            if (!StringUtils.hasText(customerSession)) {
                 throw new InvalidRequestException("Invalid request");
             }
-            List<CartItemDto> cartItems = orderPaymentService.getCartItems(customerEmail);
+            CustomerSessionDto sessionDto = objectMapperService.readToObject(customerSession, CustomerSessionDto.class);
+            List<CartItemDto> cartItems = orderPaymentService.getCartItems(sessionDto.getCustomerEmail());
             return ResponseEntity.ok(new SingleResourceResponse<>(cartItems));
         } catch (InvalidRequestException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
@@ -98,10 +103,16 @@ public class PublicOrderController {
 
     @PostMapping("/checkout")
     public ResponseEntity<SingleResourceResponse<String>> checkoutOrders(
-            @RequestBody OrderCheckoutRequest request
+            @RequestBody OrderCheckoutRequest payload,
+            HttpServletRequest request
     ) {
         try {
-            orderPaymentService.orderCheckout(request);
+            String customerSession = request.getHeader(CUSTOMER_EMAIL_HEADER_KEY);
+            if (!StringUtils.hasText(customerSession)) {
+                throw new InvalidRequestException("Invalid request");
+            }
+            CustomerSessionDto sessionDto = objectMapperService.readToObject(customerSession, CustomerSessionDto.class);
+            orderPaymentService.orderCheckout(payload, sessionDto);
             return ResponseEntity.ok(new SingleResourceResponse<>("Success"));
         } catch (InvalidRequestException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(

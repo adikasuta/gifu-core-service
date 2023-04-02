@@ -20,5 +20,4 @@ public class DashboardOrderDto {
     private String status;
 
     private ZonedDateTime paymentDate;
-    private ZonedDateTime eventDate;
 }

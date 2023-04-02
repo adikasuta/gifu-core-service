@@ -23,5 +23,11 @@ public class OrderCheckout {
     private ZonedDateTime updatedDate;
     @Column(name = "updated_by")
     private String updatedBy;
+    @Column(name = "customer_email")
+    private String customerEmail;
+    @Column(name = "customer_name")
+    private String customerName;
+    @Column(name = "customer_phone_no")
+    private String customerPhoneNo;
 
 }

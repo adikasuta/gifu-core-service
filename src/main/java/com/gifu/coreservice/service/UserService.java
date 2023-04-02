@@ -203,6 +203,7 @@ public class UserService {
         }
         User user = new User();
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setIsAccountNonExpired(true);
         user.setIsAccountNonLocked(true);

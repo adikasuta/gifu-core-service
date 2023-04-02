@@ -8,12 +8,21 @@ import com.gifu.coreservice.model.dto.*;
 import com.gifu.coreservice.model.request.ChangeStatusRequest;
 import com.gifu.coreservice.model.request.CreateVaBillPaymentRequest;
 import com.gifu.coreservice.model.request.OrderCheckoutRequest;
+import com.gifu.coreservice.model.request.SearchCheckoutOrderRequest;
 import com.gifu.coreservice.repository.*;
+import com.gifu.coreservice.repository.spec.BasicSpec;
+import com.gifu.coreservice.repository.spec.SearchCriteria;
 import com.gifu.coreservice.service.paymentscheme.AbstractCreatePaymentScheme;
 import com.gifu.coreservice.service.paymentscheme.CashPaymentSchemeService;
 import com.gifu.coreservice.service.paymentscheme.DownPaymentSchemeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
@@ -49,6 +58,8 @@ public class OrderPaymentService {
     private OrderVariantInfoRepository orderVariantInfoRepository;
     @Autowired
     private ProductRepository productRepository;
+    @Autowired
+    private CustomerRepository customerRepository;
 
     private static final String DEFAULT_REMARKS = "PEMBAYARAN KE-";
 
@@ -89,11 +100,14 @@ public class OrderPaymentService {
     }
 
     @Transactional
-    public OrderCheckout orderCheckout(OrderCheckoutRequest request) throws InvalidRequestException {
+    public OrderCheckout orderCheckout(OrderCheckoutRequest request, CustomerSessionDto sessionDto) throws InvalidRequestException {
         OrderCheckout orderCheckout = new OrderCheckout();
         orderCheckout.setGrandTotal(BigDecimal.ZERO);
         orderCheckout.setPaymentTerm(request.getPaymentTermCode());
         orderCheckout.setCreatedDate(ZonedDateTime.now());
+        orderCheckout.setCustomerName(sessionDto.getCustomerName());
+        orderCheckout.setCustomerPhoneNo(sessionDto.getPhoneNumber());
+        orderCheckout.setCustomerEmail(sessionDto.getCustomerEmail());
         orderCheckoutRepository.save(orderCheckout);
         BigDecimal grandTotal = BigDecimal.ZERO;
         for (String code : request.getOrderCodes()) {
@@ -113,7 +127,7 @@ public class OrderPaymentService {
             historicalOrderStatusService.changeStatus(ChangeStatusRequest.builder()
                     .orderId(order.getId())
                     .status(OrderStatus.WAITING_FOR_CONFIRMATION.name())
-                    .updaterEmail(SystemConst.SYSTEM.name())
+                    .updaterEmail(sessionDto.getCustomerEmail())
                     .build());
             grandTotal = grandTotal.add(order.getGrandTotal());
         }
@@ -126,8 +140,6 @@ public class OrderPaymentService {
         return orderCheckout;
     }
 
-    //TODO: write code to show to be created bill list
-
     void expireBillByOrderCheckoutPaymentId(Long orderCheckoutPaymentId) throws ObjectToJsonStringException {
         List<Bill> bills = billRepository.findByOrderCheckoutPaymentIdAndStatusIn(orderCheckoutPaymentId, List.of(BillStatus.READY_TO_PAY.name(), BillStatus.PENDING.name()));
         for (Bill bill : bills) {
@@ -136,6 +148,75 @@ public class OrderPaymentService {
         }
     }
 
+    public List<CheckoutPaymentDto> findCheckoutPaymentByOrderCheckoutId(Long orderCheckoutId) {
+        List<OrderCheckoutPayment> orderCheckoutPayments = orderCheckoutPaymentRepository.findByOrderCheckoutId(orderCheckoutId);
+        return orderCheckoutPayments.stream().map(ocp -> {
+            CheckoutPaymentDto dto = CheckoutPaymentDto.builder()
+                    .orderCheckoutPaymentId(ocp.getId())
+                    .sequenceNo(ocp.getSequenceNo())
+                    .amount(ocp.getAmount())
+                    .build();
+            BasicSpec<Bill> orderCheckoutPaymentIdEquals = new BasicSpec<>(new SearchCriteria("orderCheckoutPaymentId", SearchOperation.EQUALS, ocp.getId()));
+            BasicSpec<Bill> statusIn = new BasicSpec<>(new SearchCriteria("status", SearchOperation.IN, List.of(BillStatus.READY_TO_PAY.name(), BillStatus.PENDING.name())));
+            BasicSpec<Bill> inactiveDate = new BasicSpec<>(new SearchCriteria("expiryDate",SearchOperation.GREATER_THAN_EQUALS, ZonedDateTime.now()));
+            Pageable pageable = PageRequest.of(0, 1, Sort.by("id").descending());
+
+            Page<Bill> bills = billRepository.findAll(Specification.where(orderCheckoutPaymentIdEquals).and(statusIn).and(inactiveDate), pageable);
+            if (bills.getContent().size()>0){//assert that only one active bill per checkout payment
+                Bill bill = bills.getContent().get(0);
+                dto.setActiveBillId(bill.getId());
+                dto.setExpiryDate(bill.getExpiryDate());
+                dto.setVirtualAccounts(xenditService.findByBillId(bill.getId()));
+            }
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    public Page<CheckoutOrderDto> findCheckoutOrderList(SearchCheckoutOrderRequest request, Pageable pageable) {
+        BasicSpec<Order> orderCodeLike = new BasicSpec<>(new SearchCriteria("orderCode", SearchOperation.LIKE, request.getQuerySearch()));
+        BasicSpec<Order> productNameLike = new BasicSpec<>(new SearchCriteria("productName", SearchOperation.LIKE, request.getQuerySearch()));
+        BasicSpec<Order> customerNameLike = new BasicSpec<>(new SearchCriteria("customerName", SearchOperation.LIKE, request.getQuerySearch()));
+        BasicSpec<Order> customerEmailLike = new BasicSpec<>(new SearchCriteria("customerEmail", SearchOperation.LIKE, request.getQuerySearch()));
+
+        Specification<Order> orderSpec = Specification.where(orderCodeLike).or(productNameLike).or(customerNameLike).or(customerEmailLike);
+        Specification<Product> productSpec = Specification.where(null);
+        boolean skipProduct = true;
+        if (request.getProductCategoryId() != null) {
+            BasicSpec<Product> categoryIdEquals = new BasicSpec<>(new SearchCriteria("productCategoryId", SearchOperation.EQUALS, request.getProductCategoryId()));
+            productSpec = productSpec.and(categoryIdEquals);
+            skipProduct = false;
+        }
+        if (StringUtils.hasText(request.getProductTypeCode())) {
+            BasicSpec<Product> productTypeEquals = new BasicSpec<>(new SearchCriteria("productType", SearchOperation.EQUALS, request.getProductTypeCode()));
+            productSpec = productSpec.and(productTypeEquals);
+            skipProduct = false;
+        }
+        if (!skipProduct) {
+            List<Product> products = productRepository.findAll(productSpec);
+            List<Long> productIds = products.stream().map(Product::getId).collect(Collectors.toList());
+            orderSpec = orderSpec.and(new BasicSpec<>(new SearchCriteria("productId", SearchOperation.IN, productIds)));
+        }
+        orderSpec = orderSpec.and(new BasicSpec<>(new SearchCriteria("status", SearchOperation.IN, List.of(OrderStatus.WAITING_TO_CREATE_BILL.name(), OrderStatus.WAITING_FOR_PAYMENT.name(), OrderStatus.IN_PROGRESS_PRODUCTION))));
+        List<Order> orders = orderRepository.findAll(orderSpec);
+        List<Long> orderCheckoutIds = orders.stream().map(Order::getOrderCheckoutId).collect(Collectors.toList());
+        Page<OrderCheckout> orderCheckouts = orderCheckoutRepository.findAll(Specification.where(new BasicSpec<>(new SearchCriteria("id", SearchOperation.IN, orderCheckoutIds))), pageable);
+        return orderCheckouts.map(it -> {
+            List<CheckoutOrderDetailDto> orderDto = orders.stream().map(order -> CheckoutOrderDetailDto.builder()
+                    .orderId(order.getId())
+                    .orderCode(order.getOrderCode())
+                    .orderStatus(order.getStatus())
+                    .productName(order.getProductName())
+                    .grandTotal(order.getGrandTotal())
+                    .build()).collect(Collectors.toList());
+            return CheckoutOrderDto.builder()
+                    .orderCheckoutId(it.getId())
+                    .customerPhoneNo(it.getCustomerPhoneNo())
+                    .customerName(it.getCustomerName())
+                    .customerEmail(it.getCustomerEmail())
+                    .orders(orderDto)
+                    .build();
+        });
+    }
 
     @Transactional
     public Bill createVaBillPayment(CreateVaBillPaymentRequest request) throws InvalidRequestException, ObjectToJsonStringException {
@@ -144,8 +225,21 @@ public class OrderPaymentService {
             throw new InvalidRequestException("Order Checkout is not existed", null);
         }
         OrderCheckoutPayment orderCheckoutPayment = orderCheckoutPaymentOpt.get();
+        Optional<OrderCheckout> orderCheckoutOpt = orderCheckoutRepository.findById(orderCheckoutPayment.getOrderCheckoutId());
+        if (orderCheckoutOpt.isEmpty()) {
+            throw new InvalidRequestException("Order Checkout is not existed", null);
+        }
+        OrderCheckout orderCheckout = orderCheckoutOpt.get();
+        Optional<Customer> customerOpt = customerRepository.findByEmail(orderCheckout.getCustomerEmail());
+        if(customerOpt.isEmpty()){
+            throw new InvalidRequestException("Order Checkout is not existed", null);
+        }
+
         expireBillByOrderCheckoutPaymentId(orderCheckoutPayment.getId());
         Bill bill = new Bill();
+        bill.setCustomerEmail(orderCheckout.getCustomerEmail());
+        bill.setCustomerName(orderCheckout.getCustomerName());
+        bill.setCustomerId(customerOpt.get().getId());
         bill.setOrderCheckoutPaymentId(orderCheckoutPayment.getId());
         bill.setAmount(orderCheckoutPayment.getAmount());
         bill.setCreatedDate(ZonedDateTime.now());

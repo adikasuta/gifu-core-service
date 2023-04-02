@@ -72,6 +72,8 @@ public class Order {
     @Column(name = "cs_referral_token")
     private String csReferralToken;
 
+    @Column(name = "first_payment_date")
+    private ZonedDateTime firstPaymentDate;
     @Column(name = "created_date")
     private ZonedDateTime createdDate;
     @Column(name = "checkout_date")
