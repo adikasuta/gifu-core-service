@@ -9,9 +9,9 @@ services:
         - BUILDKIT_CACHE_SIZE=3g
     container_name: gifu-core-service
     ports:
-      - "8443:8443"
+      - "8080:8080"
     expose:
-      - 8443
+      - 8080
     volumes:
       - /var/opt/app_data/files/picture:/var/data/files/picture
       - /var/opt/certs:/certs
