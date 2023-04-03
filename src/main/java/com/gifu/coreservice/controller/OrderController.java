@@ -89,12 +89,21 @@ public class OrderController {
     public ResponseEntity<SingleResourceResponse<Page<CheckoutOrderDto>>> searchOrderCheckout(
             @RequestParam(required = false) String productType, @RequestParam(required = false) String periodFrom,
             @RequestParam(required = false) String periodUntil, @RequestParam String query,
-            @RequestParam(required = false) List<String> statuses,
-            Pageable pageable
+            @RequestParam(required = false) Long productCategoryId, Pageable pageable
     ) {
         try {
-
-            return ResponseEntity.ok(new SingleResourceResponse<>("Success"));
+            SearchCheckoutOrderRequest request = new SearchCheckoutOrderRequest();
+            request.setProductType(productType);
+            request.setQuery(query);
+            request.setProductCategoryId(productCategoryId);
+            if(StringUtils.hasText(periodFrom)){
+                request.setPeriodFrom(LocalDate.parse(periodFrom, DateTimeFormatter.ISO_LOCAL_DATE));
+            }
+            if(StringUtils.hasText(periodUntil)){
+                request.setPeriodUntil(LocalDate.parse(periodUntil, DateTimeFormatter.ISO_LOCAL_DATE));
+            }
+            Page<CheckoutOrderDto> result = orderPaymentService.findCheckoutOrderList(request, pageable);
+            return ResponseEntity.ok(new SingleResourceResponse<>(result));
         } catch (Exception ex) {
             log.error("ERROR POST VA BILL: " + ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(

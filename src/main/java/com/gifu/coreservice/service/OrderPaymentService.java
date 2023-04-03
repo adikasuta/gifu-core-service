@@ -159,7 +159,7 @@ public class OrderPaymentService {
                     .build();
             BasicSpec<Bill> orderCheckoutPaymentIdEquals = new BasicSpec<>(new SearchCriteria("orderCheckoutPaymentId", SearchOperation.EQUALS, ocp.getId()));
             BasicSpec<Bill> statusIn = new BasicSpec<>(new SearchCriteria("status", SearchOperation.IN, List.of(BillStatus.READY_TO_PAY.name(), BillStatus.PENDING.name())));
-            BasicSpec<Bill> inactiveDate = new BasicSpec<>(new SearchCriteria("expiryDate",SearchOperation.GREATER_THAN_EQUALS, ZonedDateTime.now()));
+            BasicSpec<Bill> inactiveDate = new BasicSpec<>(new SearchCriteria("expiryDate",SearchOperation.GREATER_THAN, ZonedDateTime.now()));
             Pageable pageable = PageRequest.of(0, 1, Sort.by("id").descending());
 
             Page<Bill> bills = billRepository.findAll(Specification.where(orderCheckoutPaymentIdEquals).and(statusIn).and(inactiveDate), pageable);
