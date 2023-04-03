@@ -1,13 +1,11 @@
 package com.gifu.coreservice.controller.publicapi;
 
+import com.gifu.coreservice.enumeration.OrderStatus;
 import com.gifu.coreservice.enumeration.ProductType;
 import com.gifu.coreservice.enumeration.VariantTypeEnum;
 import com.gifu.coreservice.model.dto.ValueTextDto;
 import com.gifu.coreservice.model.response.SingleResourceResponse;
-import com.gifu.coreservice.service.AdministrativeAreaService;
-import com.gifu.coreservice.service.ProductCategoryService;
-import com.gifu.coreservice.service.ProductVariantService;
-import com.gifu.coreservice.service.UserService;
+import com.gifu.coreservice.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -29,6 +28,20 @@ public class ReferenceController {
     private UserService userService;
     @Autowired
     private AdministrativeAreaService administrativeAreaService;
+
+    @GetMapping("/order-status")
+    public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getOrderStatus() {
+        List<ValueTextDto> options = new ArrayList<>();
+        for(OrderStatus status : List.of(
+                OrderStatus.WAITING_FOR_CONFIRMATION,
+                OrderStatus.WAITING_TO_CREATE_BILL,
+                OrderStatus.WAITING_FOR_PAYMENT,
+                OrderStatus.IN_PROGRESS_PRODUCTION,
+                OrderStatus.DONE)){
+            options.add(new ValueTextDto(status.name(), status.getLabel()));
+        }
+        return ResponseEntity.ok(new SingleResourceResponse<>(options));
+    }
 
     @GetMapping("/product-type")
     public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getProductType() {

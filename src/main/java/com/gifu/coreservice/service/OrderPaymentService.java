@@ -15,6 +15,7 @@ import com.gifu.coreservice.repository.spec.SearchCriteria;
 import com.gifu.coreservice.service.paymentscheme.AbstractCreatePaymentScheme;
 import com.gifu.coreservice.service.paymentscheme.CashPaymentSchemeService;
 import com.gifu.coreservice.service.paymentscheme.DownPaymentSchemeService;
+import com.gifu.coreservice.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -173,10 +174,10 @@ public class OrderPaymentService {
     }
 
     public Page<CheckoutOrderDto> findCheckoutOrderList(SearchCheckoutOrderRequest request, Pageable pageable) {
-        BasicSpec<Order> orderCodeLike = new BasicSpec<>(new SearchCriteria("orderCode", SearchOperation.LIKE, request.getQuerySearch()));
-        BasicSpec<Order> productNameLike = new BasicSpec<>(new SearchCriteria("productName", SearchOperation.LIKE, request.getQuerySearch()));
-        BasicSpec<Order> customerNameLike = new BasicSpec<>(new SearchCriteria("customerName", SearchOperation.LIKE, request.getQuerySearch()));
-        BasicSpec<Order> customerEmailLike = new BasicSpec<>(new SearchCriteria("customerEmail", SearchOperation.LIKE, request.getQuerySearch()));
+        BasicSpec<Order> orderCodeLike = new BasicSpec<>(new SearchCriteria("orderCode", SearchOperation.LIKE, request.getQuery()));
+        BasicSpec<Order> productNameLike = new BasicSpec<>(new SearchCriteria("productName", SearchOperation.LIKE, request.getQuery()));
+        BasicSpec<Order> customerNameLike = new BasicSpec<>(new SearchCriteria("customerName", SearchOperation.LIKE, request.getQuery()));
+        BasicSpec<Order> customerEmailLike = new BasicSpec<>(new SearchCriteria("customerEmail", SearchOperation.LIKE, request.getQuery()));
 
         Specification<Order> orderSpec = Specification.where(orderCodeLike).or(productNameLike).or(customerNameLike).or(customerEmailLike);
         Specification<Product> productSpec = Specification.where(null);
@@ -186,8 +187,8 @@ public class OrderPaymentService {
             productSpec = productSpec.and(categoryIdEquals);
             skipProduct = false;
         }
-        if (StringUtils.hasText(request.getProductTypeCode())) {
-            BasicSpec<Product> productTypeEquals = new BasicSpec<>(new SearchCriteria("productType", SearchOperation.EQUALS, request.getProductTypeCode()));
+        if (StringUtils.hasText(request.getProductType())) {
+            BasicSpec<Product> productTypeEquals = new BasicSpec<>(new SearchCriteria("productType", SearchOperation.EQUALS, request.getProductType()));
             productSpec = productSpec.and(productTypeEquals);
             skipProduct = false;
         }
@@ -196,6 +197,17 @@ public class OrderPaymentService {
             List<Long> productIds = products.stream().map(Product::getId).collect(Collectors.toList());
             orderSpec = orderSpec.and(new BasicSpec<>(new SearchCriteria("productId", SearchOperation.IN, productIds)));
         }
+
+        if(request.getPeriodFrom()!=null){
+            ZonedDateTime start = DateUtils.toZoneDateTime(request.getPeriodFrom(), true);
+            orderSpec = orderSpec.and(new BasicSpec<>(new SearchCriteria("checkoutDate", SearchOperation.GREATER_THAN_EQUALS, start)));
+        }
+
+        if(request.getPeriodUntil()!=null){
+            ZonedDateTime end = DateUtils.toZoneDateTime(request.getPeriodUntil(), true);
+            orderSpec = orderSpec.and(new BasicSpec<>(new SearchCriteria("checkoutDate", SearchOperation.LESSER_THAN_EQUALS, end)));
+        }
+
         orderSpec = orderSpec.and(new BasicSpec<>(new SearchCriteria("status", SearchOperation.IN, List.of(OrderStatus.WAITING_TO_CREATE_BILL.name(), OrderStatus.WAITING_FOR_PAYMENT.name(), OrderStatus.IN_PROGRESS_PRODUCTION))));
         List<Order> orders = orderRepository.findAll(orderSpec);
         List<Long> orderCheckoutIds = orders.stream().map(Order::getOrderCheckoutId).collect(Collectors.toList());

@@ -73,7 +73,7 @@ public class JwtUtils {
                 .setSubject(user.getName())
                 .setId(UUID.randomUUID().toString())
                 .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(now.plus(30, ChronoUnit.MINUTES)))
+                .setExpiration(Date.from(now.plus(4, ChronoUnit.DAYS)))
                 .signWith(privateKey)
                 .compact();
     }

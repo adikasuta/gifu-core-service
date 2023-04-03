@@ -11,6 +11,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Data
@@ -37,20 +38,52 @@ public class BasicSpec<T> implements Specification<T> {
                     String val = (String) (criteria.getValue());
                     return builder.like(
                             builder.upper(root.get(criteria.getKey())),
-                            "%"+val.toUpperCase()+"%");
+                            "%" + val.toUpperCase() + "%");
                 } else {
                     return builder.equal(root.get(criteria.getKey()), criteria.getValue());
                 }
             case GREATER_THAN_EQUALS:
+                if (root.get(criteria.getKey()).getJavaType() == String.class) {
+                    return builder.greaterThanOrEqualTo(
+                            root.get(criteria.getKey()), (String) criteria.getValue());
+                }
+                if (root.get(criteria.getKey()).getJavaType() == ZonedDateTime.class) {
+                    return builder.greaterThanOrEqualTo(
+                            root.get(criteria.getKey()), (ZonedDateTime) criteria.getValue());
+                }
                 return builder.greaterThanOrEqualTo(
                         root.get(criteria.getKey()), criteria.getValue().toString());
             case LESSER_THAN_EQUALS:
+                if (root.get(criteria.getKey()).getJavaType() == String.class) {
+                    return builder.lessThanOrEqualTo(
+                            root.get(criteria.getKey()), (String) criteria.getValue());
+                }
+                if (root.get(criteria.getKey()).getJavaType() == ZonedDateTime.class) {
+                    return builder.lessThanOrEqualTo(
+                            root.get(criteria.getKey()), (ZonedDateTime) criteria.getValue());
+                }
                 return builder.lessThanOrEqualTo(
                         root.get(criteria.getKey()), criteria.getValue().toString());
             case LESSER_THAN:
+                if (root.get(criteria.getKey()).getJavaType() == String.class) {
+                    return builder.lessThan(
+                            root.get(criteria.getKey()), (String) criteria.getValue());
+                }
+                if (root.get(criteria.getKey()).getJavaType() == ZonedDateTime.class) {
+                    return builder.lessThan(
+                            root.get(criteria.getKey()), (ZonedDateTime) criteria.getValue());
+                }
                 return builder.lessThan(
                         root.get(criteria.getKey()), criteria.getValue().toString());
             case GREATER_THAN:
+                if (root.get(criteria.getKey()).getJavaType() == String.class) {
+                    return builder.greaterThan(
+                            root.get(criteria.getKey()), (String) criteria.getValue());
+                }
+                if (root.get(criteria.getKey()).getJavaType() == ZonedDateTime.class) {
+                    return builder.greaterThan(
+                            root.get(criteria.getKey()), (ZonedDateTime) criteria.getValue());
+                }
                 return builder.greaterThan(
                         root.get(criteria.getKey()), criteria.getValue().toString());
             case IN:

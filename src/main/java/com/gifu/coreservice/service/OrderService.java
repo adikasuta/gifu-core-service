@@ -3,6 +3,7 @@ package com.gifu.coreservice.service;
 import com.gifu.coreservice.entity.*;
 import com.gifu.coreservice.enumeration.OrderStatus;
 import com.gifu.coreservice.enumeration.SearchOperation;
+import com.gifu.coreservice.enumeration.ShippingVendor;
 import com.gifu.coreservice.enumeration.SystemConst;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.*;
@@ -13,6 +14,7 @@ import com.gifu.coreservice.model.request.SearchDashboardOrderRequest;
 import com.gifu.coreservice.repository.*;
 import com.gifu.coreservice.repository.spec.BasicSpec;
 import com.gifu.coreservice.repository.spec.SearchCriteria;
+import com.gifu.coreservice.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -111,20 +113,46 @@ public class OrderService {
     }
 
     public Page<DashboardOrderDto> getDashboardOrderPage(SearchDashboardOrderRequest request, Pageable pageable) {
-        BasicSpec<Order> productType = new BasicSpec<>(
-                new SearchCriteria("productType", SearchOperation.EQUALS, request.getProductType())
-        );
-        BasicSpec<Order> periodFrom = new BasicSpec<>(
-                new SearchCriteria("checkoutDate", SearchOperation.GREATER_THAN_EQUALS, request.getPeriodFrom())
-        );
-        BasicSpec<Order> periodUntil = new BasicSpec<>(
-                new SearchCriteria("checkoutDate", SearchOperation.LESSER_THAN_EQUALS, request.getPeriodFrom())
-        );
+        BasicSpec<Order> likeProductName = new BasicSpec<>(new SearchCriteria("productName", SearchOperation.LIKE, request.getQuery()));
+        BasicSpec<Order> likeCustomerName = new BasicSpec<>(new SearchCriteria("customerName", SearchOperation.LIKE, request.getQuery()));
+        BasicSpec<Order> likeCustomerEmail = new BasicSpec<>(new SearchCriteria("customerEmail", SearchOperation.LIKE, request.getQuery()));
+        BasicSpec<Order> likeOrderCode = new BasicSpec<>(new SearchCriteria("orderCode", SearchOperation.LIKE, request.getQuery()));
+        Specification<Order> spec = Specification.where(likeProductName).or(likeCustomerName).or(likeCustomerEmail).or(likeOrderCode);
+        if (StringUtils.hasText(request.getProductType())) {
+            BasicSpec<Order> productType = new BasicSpec<>(
+                    new SearchCriteria("productType", SearchOperation.EQUALS, request.getProductType())
+            );
+            spec = spec.and(productType);
+        }
+        if (request.getPeriodFrom() != null) {
+            ZonedDateTime start = DateUtils.toZoneDateTime(request.getPeriodFrom(), true);
+            BasicSpec<Order> periodFrom = new BasicSpec<>(
+                    new SearchCriteria("createdDate", SearchOperation.GREATER_THAN_EQUALS, start)
+            );
+            spec = spec.and(periodFrom);
+        }
+        if (request.getPeriodUntil() != null) {
+            ZonedDateTime end = DateUtils.toZoneDateTime(request.getPeriodUntil(), false);
+            BasicSpec<Order> periodUntil = new BasicSpec<>(
+                    new SearchCriteria("createdDate", SearchOperation.LESSER_THAN_EQUALS, end)
+            );
+            spec = spec.and(periodUntil);
+        }
+        if (request.getStatuses().size() > 0) {
+            BasicSpec<Order> statusesIn = new BasicSpec<>(
+                    new SearchCriteria("status", SearchOperation.IN, request.getStatuses())
+            );
+            spec = spec.and(statusesIn);
+        }
 
-        Page<Order> orders = orderRepository.findAll(Specification.where(productType).and(periodFrom).and(periodUntil), pageable);
+        Page<Order> orders = orderRepository.findAll(spec, pageable);
         return orders.map(it -> {
-            DashboardOrderDto result = DashboardOrderDto.builder()
+            Optional<OrderShipping> orderShippingOpt = orderShippingRepository.findById(it.getOrderShippingId());
+
+            DashboardOrderDto dto = DashboardOrderDto.builder()
                     .id(it.getId())
+                    .createdDate(it.getCreatedDate())
+                    .checkoutDate(it.getCheckoutDate())
                     .orderCode(it.getOrderCode())
                     .productType(it.getProductType())
                     .customerName(it.getCustomerName())
@@ -133,12 +161,26 @@ public class OrderService {
                     .deadline(it.getDeadline())
                     .grandTotal(it.getGrandTotal())
                     .status(it.getStatus())
+                    .statusText(OrderStatus.valueOf(it.getStatus()).getLabel())
                     .paymentDate(it.getFirstPaymentDate())
                     .build();
-            Optional<Product> product = productRepository.findById(it.getProductId());
-            product.ifPresent(value -> result.setProductName(value.getName()));
 
-            return result;
+            if(orderShippingOpt.isPresent()){
+                OrderShipping orderShipping = orderShippingOpt.get();
+                Optional<Province> provinceOpt = provinceRepository.findById(orderShipping.getProvinceCode());
+                provinceOpt.ifPresent(addr -> dto.setProvinceName(addr.getName()));
+                Optional<City> cityOptional = cityRepository.findById(orderShipping.getCityCode());
+                cityOptional.ifPresent(addr -> dto.setCityName(addr.getName()));
+                Optional<District> district = districtRepository.findById(orderShipping.getDistrictCode());
+                district.ifPresent(addr -> dto.setDistrictName(addr.getName()));
+                Optional<Kelurahan> kelurahan = kelurahanRepository.findById(orderShipping.getKelurahanCode());
+                kelurahan.ifPresent(addr -> dto.setKelurahanName(addr.getName()));
+                dto.setPostalCode(orderShipping.getPostalCode());
+                dto.setAddress(orderShipping.getAddress());
+                dto.setShippingVendorCode(orderShipping.getPreferredShippingVendor());
+                dto.setShippingVendorName(ShippingVendor.valueOf(orderShipping.getPreferredShippingVendor()).getText());
+            }
+            return dto;
         });
     }
 
@@ -159,17 +201,18 @@ public class OrderService {
         return orderCheckoutRepository.save(orderCheckout);
     }
 
+    @Transactional
     public Order confirmOrder(ConfirmOrderRequest request) throws InvalidRequestException {
         Optional<Order> orderOpt = orderRepository.findById(request.getOrderId());
         if (orderOpt.isEmpty()) {
             throw new InvalidRequestException("Order is not existed", null);
         }
         Order order = orderOpt.get();
-        if (OrderStatus.WAITING_FOR_CONFIRMATION.name().equals(order.getStatus())) {
+        if (!OrderStatus.WAITING_FOR_CONFIRMATION.name().equals(order.getStatus())) {
             throw new InvalidRequestException("Order cannot be confirmed", null);
         }
         order.setShippingFee(request.getShippingFee());
-        order.setDeadline(request.getDeadline());
+        order.setDeadline(DateUtils.toZoneDateTime(request.getDeadline(), true));
         order.setUpdatedDate(ZonedDateTime.now());
         order.setUpdatedBy(request.getUpdaterEmail());
 
@@ -388,6 +431,15 @@ public class OrderService {
     @Transactional
     public Order saveToDraft(OrderRequest request) throws InvalidRequestException {
         Order order = new Order();
+        order.setShippingFee(BigDecimal.ZERO);
+        order.setChargeFee(BigDecimal.ZERO);
+        order.setCashback(BigDecimal.ZERO);
+        order.setDiscount(BigDecimal.ZERO);
+        order.setGrandTotal(BigDecimal.ZERO);
+        order.setSubTotal(BigDecimal.ZERO);
+        order.setProductPrice(BigDecimal.ZERO);
+        order.setVariantPrice(BigDecimal.ZERO);
+
         order.setOrderCode(generateOrderCode(order));
         orderRepository.save(order);
         Customer customer = saveCustomer(request);
