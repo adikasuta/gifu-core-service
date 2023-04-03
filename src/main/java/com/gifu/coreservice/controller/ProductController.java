@@ -9,6 +9,7 @@ import com.gifu.coreservice.model.response.SingleResourceResponse;
 import com.gifu.coreservice.service.ObjectMapperService;
 import com.gifu.coreservice.service.ProductService;
 import com.gifu.coreservice.utils.SessionUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
+@Slf4j
 @RequestMapping(path = "api/product")
 public class ProductController {
 
@@ -38,10 +40,12 @@ public class ProductController {
             productService.saveProduct(request, file, user.getEmail());
             return ResponseEntity.ok(new SingleResourceResponse<>("Success saving product"));
         } catch (InvalidRequestException ex) {
+            log.error("ERROR SAVE PRODUCT, message="+ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     new SingleResourceResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value())
             );
         } catch (Exception ex) {
+            log.error("ERROR SAVE PRODUCT, message="+ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
             );
