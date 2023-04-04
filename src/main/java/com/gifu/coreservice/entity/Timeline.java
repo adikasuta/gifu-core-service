@@ -24,4 +24,7 @@ public class Timeline {
     private ZonedDateTime createdDate;
     @Column(name = "created_by")
     private String createdBy;
+    @Column(name = "finished_date")
+    private ZonedDateTime finishedDate;
+
 }

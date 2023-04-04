@@ -10,6 +10,9 @@ import java.util.List;
 @Builder
 public class OrderDto {
     private Long id;
+    private String customerName;
+    private String customerEmail;
+    private String customerPhoneNo;
     private String productName;
     private ZonedDateTime deadline;
     private Integer quantity;

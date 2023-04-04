@@ -55,6 +55,8 @@ public class TimelineService {
     @Autowired
     private UserService userService;
     @Autowired
+    private UserRepository userRepository;
+    @Autowired
     private OrderService orderService;
     @Autowired
     private HistoricalOrderStatusService historicalOrderStatusService;
@@ -210,6 +212,8 @@ public class TimelineService {
         }
         Step currentStepMaster = stepMasterOpt.get();
         if (currentStepMaster.getNextStepId() == null) {
+            timeline.setDone(true);
+            timelineRepository.save(timeline);
             historicalOrderStatusService.changeStatus(ChangeStatusRequest.builder()
                     .orderId(timeline.getOrderId())
                     .status(OrderStatus.DONE.name())
@@ -254,9 +258,11 @@ public class TimelineService {
             boolean isToBeApproveStep = PermissionEnum.APPROVE_STEP_STATUS.name().equals(status.getPermissionCode()) && isApprover;
             StepTodoDto stepToDo = StepTodoDto.builder()
                     .id(currentStep.getStepId())
+                    .timelineId(timeline.getId())
                     .assigneeUserId(currentStep.getAssigneeUserId())
                     .name(currentStep.getStepName())
                     .currentStatusId(currentStatus.getStatusId())
+                    .currentStatusName(currentStatus.getStatusName())
                     .build();
             List<Status> statuses = new ArrayList<>();
             if (currentStep.getAssigneeUserId().equals(userId) || isToBeApproveStep) {
@@ -264,6 +270,8 @@ public class TimelineService {
             } else {
                 statuses.add(status);
             }
+            Optional<User> userOpt = userRepository.findById(currentStep.getAssigneeUserId());
+            userOpt.ifPresent(user -> stepToDo.setAssigneeName(user.getName()));
             stepToDo.setStatuses(statuses);
             stepToDo.setOrderDto(orderService.getOrderDtoById(timeline.getOrderId()));
             stepTodoList.add(stepToDo);

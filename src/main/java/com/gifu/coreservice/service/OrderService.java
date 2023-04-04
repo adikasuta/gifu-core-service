@@ -102,6 +102,9 @@ public class OrderService {
             }).collect(Collectors.toList());
             return OrderDto.builder()
                     .id(orderId)
+                    .customerEmail(order.getCustomerEmail())
+                    .customerName(order.getCustomerName())
+                    .customerPhoneNo(order.getCustomerPhoneNo())
                     .productName(order.getProductName())
                     .deadline(order.getDeadline())
                     .quantity(order.getQuantity())

@@ -10,9 +10,12 @@ import java.util.List;
 @Builder
 public class StepTodoDto {
     private Long id;
+    private Long timelineId;
     private String name;
     private Long currentStatusId;
+    private String currentStatusName;
     private Long assigneeUserId;
+    private String assigneeName;
     private List<Status> statuses;
     private OrderDto orderDto;
 }
