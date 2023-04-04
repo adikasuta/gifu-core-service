@@ -415,14 +415,35 @@ public class OrderService {
         }
     }
 
-
     @Transactional
-    public Order addToCart(String orderCode) throws InvalidRequestException {
+    public Order removeFromCart(String orderCode, String clientIp) throws InvalidRequestException {
         Optional<Order> orderOpt = orderRepository.findByOrderCode(orderCode);
         if (orderOpt.isEmpty()) {
             throw new InvalidRequestException("Order Code is not valid");
         }
         Order order = orderOpt.get();
+        if(!clientIp.equals(order.getClientIpAddress())){
+            throw new InvalidRequestException("Unauthorized Action");
+        }
+
+        historicalOrderStatusService.changeStatus(ChangeStatusRequest.builder()
+                .orderId(order.getId())
+                .status(OrderStatus.DRAFT.name())
+                .updaterEmail(SystemConst.SYSTEM.name())
+                .build());
+        return order;
+    }
+
+    @Transactional
+    public Order addToCart(String orderCode, String clientIp) throws InvalidRequestException {
+        Optional<Order> orderOpt = orderRepository.findByOrderCode(orderCode);
+        if (orderOpt.isEmpty()) {
+            throw new InvalidRequestException("Order Code is not valid");
+        }
+        Order order = orderOpt.get();
+        if(!clientIp.equals(order.getClientIpAddress())){
+            throw new InvalidRequestException("Unauthorized Action");
+        }
         historicalOrderStatusService.changeStatus(ChangeStatusRequest.builder()
                 .orderId(order.getId())
                 .status(OrderStatus.IN_CART.name())
@@ -432,7 +453,7 @@ public class OrderService {
     }
 
     @Transactional
-    public Order saveToDraft(OrderRequest request) throws InvalidRequestException {
+    public Order saveToDraft(OrderRequest request, String clientIp) throws InvalidRequestException {
         Order order = new Order();
         order.setShippingFee(BigDecimal.ZERO);
         order.setChargeFee(BigDecimal.ZERO);
@@ -442,6 +463,7 @@ public class OrderService {
         order.setSubTotal(BigDecimal.ZERO);
         order.setProductPrice(BigDecimal.ZERO);
         order.setVariantPrice(BigDecimal.ZERO);
+        order.setClientIpAddress(clientIp);
 
         order.setOrderCode(generateOrderCode(order));
         orderRepository.save(order);

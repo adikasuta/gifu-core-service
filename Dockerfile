@@ -9,4 +9,4 @@ WORKDIR /application
 COPY --from=maven /gifu-core-service.jar ./gifu-core-service.jar
 CMD echo "The application is starting..." && \
  java \
- -jar gifu-core-service.jar
+ -Dspring.profiles.active=staging -jar gifu-core-service.jar

@@ -74,8 +74,8 @@ public class OrderPaymentService {
         return paymentSchemeCreator.createPaymentScheme(orderCheckout);
     }
 
-    public List<CartItemDto> getCartItems(String customerEmail) {
-        List<Order> orders = orderRepository.findByCustomerEmailAndStatus(customerEmail, OrderStatus.IN_CART.name());
+    public List<CartItemDto> getCartItems(String clientIp) {
+        List<Order> orders = orderRepository.findByClientIpAddressAndStatus(clientIp, OrderStatus.IN_CART.name());
         return orders.stream().map(it -> {
             Optional<Product> productOpt = productRepository.findById(it.getProductId());
             CartItemDto dto = CartItemDto.builder()
@@ -98,14 +98,14 @@ public class OrderPaymentService {
     }
 
     @Transactional
-    public OrderCheckout orderCheckout(OrderCheckoutRequest request, CustomerSessionDto sessionDto) throws InvalidRequestException {
+    public OrderCheckout orderCheckout(OrderCheckoutRequest request, String clientIp) throws InvalidRequestException {
         OrderCheckout orderCheckout = new OrderCheckout();
         orderCheckout.setGrandTotal(BigDecimal.ZERO);
         orderCheckout.setPaymentTerm(request.getPaymentTermCode());
         orderCheckout.setCreatedDate(ZonedDateTime.now());
-        orderCheckout.setCustomerName(sessionDto.getCustomerName());
-        orderCheckout.setCustomerPhoneNo(sessionDto.getPhoneNumber());
-        orderCheckout.setCustomerEmail(sessionDto.getCustomerEmail());
+        orderCheckout.setCustomerName(request.getCustomerName());
+        orderCheckout.setCustomerPhoneNo(request.getPhoneNumber());
+        orderCheckout.setCustomerEmail(request.getCustomerEmail());
         orderCheckoutRepository.save(orderCheckout);
         BigDecimal grandTotal = BigDecimal.ZERO;
         for (String code : request.getOrderCodes()) {
@@ -117,6 +117,9 @@ public class OrderPaymentService {
             if (!OrderStatus.IN_CART.name().equals(order.getStatus())) {
                 throw new InvalidRequestException("Invalid order");
             }
+            if(!clientIp.equals(order.getClientIpAddress())){
+                throw new InvalidRequestException("Invalid order");
+            }
             order.setOrderCheckoutId(orderCheckout.getId());
             order.setStatus(OrderStatus.WAITING_FOR_CONFIRMATION.name());
             order.setUpdatedDate(ZonedDateTime.now());
@@ -125,7 +128,7 @@ public class OrderPaymentService {
             historicalOrderStatusService.changeStatus(ChangeStatusRequest.builder()
                     .orderId(order.getId())
                     .status(OrderStatus.WAITING_FOR_CONFIRMATION.name())
-                    .updaterEmail(sessionDto.getCustomerEmail())
+                    .updaterEmail(clientIp)
                     .build());
             grandTotal = grandTotal.add(order.getGrandTotal());
         }

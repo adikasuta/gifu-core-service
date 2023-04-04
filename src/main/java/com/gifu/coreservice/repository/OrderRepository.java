@@ -16,5 +16,5 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     long countByOrderCode(String orderCode);
     Optional<Order> findByOrderCode(String orderCode);
 
-    List<Order> findByCustomerEmailAndStatus(String customerEmail, String status);
+    List<Order> findByClientIpAddressAndStatus(String clientIpAddress, String status);
 }

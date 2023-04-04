@@ -85,4 +85,6 @@ public class Order {
 
     @Column(name="workflow_id")
     private Long workflowId;
+    @Column(name="client_ip_address")
+    private String clientIpAddress;
 }

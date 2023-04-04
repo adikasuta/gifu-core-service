@@ -10,4 +10,7 @@ import java.util.List;
 public class OrderCheckoutRequest {
     private List<String> orderCodes;
     private String paymentTermCode;
+    private String customerEmail;
+    private String customerName;
+    private String phoneNumber;
 }

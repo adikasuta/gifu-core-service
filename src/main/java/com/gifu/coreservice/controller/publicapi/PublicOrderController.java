@@ -3,7 +3,6 @@ package com.gifu.coreservice.controller.publicapi;
 import com.gifu.coreservice.entity.Order;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.CartItemDto;
-import com.gifu.coreservice.model.dto.CustomerSessionDto;
 import com.gifu.coreservice.model.dto.InvoiceDto;
 import com.gifu.coreservice.model.request.OrderCheckoutRequest;
 import com.gifu.coreservice.model.request.OrderRequest;
@@ -11,6 +10,7 @@ import com.gifu.coreservice.model.response.SingleResourceResponse;
 import com.gifu.coreservice.service.ObjectMapperService;
 import com.gifu.coreservice.service.OrderPaymentService;
 import com.gifu.coreservice.service.OrderService;
+import com.gifu.coreservice.utils.SessionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -39,10 +39,12 @@ public class PublicOrderController {
 
     @PostMapping
     public ResponseEntity<SingleResourceResponse<Map<String,String>>> postOrder(
-            @RequestBody OrderRequest request
+            @RequestBody OrderRequest payload,
+            HttpServletRequest request
     ) {
         try {
-            Order order = orderService.saveToDraft(request);
+            String clientIp = SessionUtils.getClientIP(request);
+            Order order = orderService.saveToDraft(payload, clientIp);
             Map<String,String> mapper = new HashMap<>();
             mapper.put("orderCode",order.getOrderCode());
             return ResponseEntity.ok(new SingleResourceResponse<>(mapper));
@@ -60,10 +62,15 @@ public class PublicOrderController {
 
     @PostMapping("/{orderCode}")
     public ResponseEntity<SingleResourceResponse<String>> addToCart(
-            @PathVariable String orderCode
+            @PathVariable String orderCode,
+            HttpServletRequest request
     ) {
         try {
-            orderService.addToCart(orderCode);
+            String ipAddress = SessionUtils.getClientIP(request);
+            if (!StringUtils.hasText(ipAddress)) {
+                throw new InvalidRequestException("Invalid request");
+            }
+            orderService.addToCart(orderCode, ipAddress);
             return ResponseEntity.ok(new SingleResourceResponse<>("Success"));
         } catch (InvalidRequestException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
@@ -77,17 +84,40 @@ public class PublicOrderController {
         }
     }
 
+    @DeleteMapping("/{orderCode}")
+    public ResponseEntity<SingleResourceResponse<String>> removeFromCart(
+            @PathVariable String orderCode,
+            HttpServletRequest request
+    ) {
+        try {
+            String ipAddress = SessionUtils.getClientIP(request);
+            if (!StringUtils.hasText(ipAddress)) {
+                throw new InvalidRequestException("Invalid request");
+            }
+            orderService.removeFromCart(orderCode, ipAddress);
+            return ResponseEntity.ok(new SingleResourceResponse<>("Success"));
+        } catch (InvalidRequestException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    new SingleResourceResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value())
+            );
+        } catch (Exception ex) {
+            log.error("ERROR REMOVE FROM CART ORDER: " + ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
+        }
+    }
+
     @GetMapping("/cart")
     public ResponseEntity<SingleResourceResponse<List<CartItemDto>>> findCartItems(
             HttpServletRequest request
     ) {
         try {
-            String customerSession = request.getHeader(CUSTOMER_EMAIL_HEADER_KEY);
-            if (!StringUtils.hasText(customerSession)) {
+            String ipAddress = SessionUtils.getClientIP(request);
+            if (!StringUtils.hasText(ipAddress)) {
                 throw new InvalidRequestException("Invalid request");
             }
-            CustomerSessionDto sessionDto = objectMapperService.readToObject(customerSession, CustomerSessionDto.class);
-            List<CartItemDto> cartItems = orderPaymentService.getCartItems(sessionDto.getCustomerEmail());
+            List<CartItemDto> cartItems = orderPaymentService.getCartItems(ipAddress);
             return ResponseEntity.ok(new SingleResourceResponse<>(cartItems));
         } catch (InvalidRequestException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
@@ -107,12 +137,11 @@ public class PublicOrderController {
             HttpServletRequest request
     ) {
         try {
-            String customerSession = request.getHeader(CUSTOMER_EMAIL_HEADER_KEY);
-            if (!StringUtils.hasText(customerSession)) {
+            String ipAddress = SessionUtils.getClientIP(request);
+            if (!StringUtils.hasText(ipAddress)) {
                 throw new InvalidRequestException("Invalid request");
             }
-            CustomerSessionDto sessionDto = objectMapperService.readToObject(customerSession, CustomerSessionDto.class);
-            orderPaymentService.orderCheckout(payload, sessionDto);
+            orderPaymentService.orderCheckout(payload, ipAddress);
             return ResponseEntity.ok(new SingleResourceResponse<>("Success"));
         } catch (InvalidRequestException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
