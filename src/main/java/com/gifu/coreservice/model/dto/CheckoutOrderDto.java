@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Data
@@ -14,6 +15,8 @@ public class CheckoutOrderDto {
     private String customerPhoneNo;
     private String customerEmail;
     private String paymentTerm;
+    private ZonedDateTime createdDate;
     private BigDecimal grandTotalCheckout;
     private List<CheckoutOrderDetailDto> orders;
+    private List<SimpleCheckoutPaymentDto> payments;
 }

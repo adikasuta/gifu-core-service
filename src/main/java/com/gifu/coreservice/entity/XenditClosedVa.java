@@ -24,6 +24,9 @@ public class XenditClosedVa {
     @Column(name = "bank_code")
     private String bankCode;
 
+    @Column(name = "merchant_code")
+    private String merchantCode;
+
     @Column(name = "va_number")
     private String vaNumber;
 

@@ -4,6 +4,7 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 
 @Entity
 @Table(name = "order_checkout_payment")
@@ -18,4 +19,9 @@ public class OrderCheckoutPayment {
     private Integer sequenceNo;
     @Column(name = "amount")
     private BigDecimal amount;
+    @Column(name = "is_paid")
+    private boolean isPaid;
+    @Column(name = "payment_date")
+    private ZonedDateTime paymentDate;
+
 }

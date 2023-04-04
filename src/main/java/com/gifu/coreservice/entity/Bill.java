@@ -27,7 +27,7 @@ public class Bill {
     @Column(name = "payment_date")
     private ZonedDateTime paymentDate;
     @Column(name = "bill_payment_id")
-    private Long billPaymentId;
+    private Long billPaymentId;//xenditVaPaymentId
     @Column(name = "payment_partner")
     private String paymentPartner;
     @Column(name="status")

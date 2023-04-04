@@ -28,10 +28,7 @@ import org.springframework.util.StringUtils;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -145,29 +142,59 @@ public class OrderPaymentService {
         List<Bill> bills = billRepository.findByOrderCheckoutPaymentIdAndStatusIn(orderCheckoutPaymentId, List.of(BillStatus.READY_TO_PAY.name(), BillStatus.PENDING.name()));
         for (Bill bill : bills) {
             bill.setExpiryDate(ZonedDateTime.now());
+            billRepository.save(bill);
             xenditService.expireBill(bill);
         }
     }
 
+    public PaymentInstructionDto getPaymentInstructionByOrderCheckoutPaymentId(Long orderCheckoutPaymentId) throws InvalidRequestException {
+        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("id").descending());
+        List<Bill> bills = billRepository.findByOrderCheckoutPaymentId(orderCheckoutPaymentId, pageable);
+        if (bills.isEmpty()) {
+            throw new InvalidRequestException("Checkout Payment is not billed yet");
+        }
+        Bill lastBill = bills.get(0);
+        List<XenditClosedVa> virtualAccounts = xenditService.findByBillId(lastBill.getId());
+        List<PaymentInstructionVADto> dto = virtualAccounts.stream().map(it -> PaymentInstructionVADto.builder()
+                .accountName(it.getName())
+                .bankCode(it.getBankCode())
+                .fullVaNumber(it.getFullVaNumber())
+                .build()).collect(Collectors.toList());
+        return PaymentInstructionDto.builder()
+                .orderCheckoutPaymentId(orderCheckoutPaymentId)
+                .billId(lastBill.getId())
+                .expiryDate(lastBill.getExpiryDate())
+                .amount(lastBill.getAmount())
+                .paymentDate(lastBill.getPaymentDate())
+                .virtualAccounts(dto)
+                .build();
+    }
+
     public List<CheckoutPaymentDto> findCheckoutPaymentByOrderCheckoutId(Long orderCheckoutId) {
-        List<OrderCheckoutPayment> orderCheckoutPayments = orderCheckoutPaymentRepository.findByOrderCheckoutId(orderCheckoutId);
+        Pageable paymentPageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("sequenceNo").ascending());
+        List<OrderCheckoutPayment> orderCheckoutPayments = orderCheckoutPaymentRepository.findByOrderCheckoutId(orderCheckoutId, paymentPageable);
         return orderCheckoutPayments.stream().map(ocp -> {
             CheckoutPaymentDto dto = CheckoutPaymentDto.builder()
                     .orderCheckoutPaymentId(ocp.getId())
                     .sequenceNo(ocp.getSequenceNo())
                     .amount(ocp.getAmount())
                     .build();
-            BasicSpec<Bill> orderCheckoutPaymentIdEquals = new BasicSpec<>(new SearchCriteria("orderCheckoutPaymentId", SearchOperation.EQUALS, ocp.getId()));
-            BasicSpec<Bill> statusIn = new BasicSpec<>(new SearchCriteria("status", SearchOperation.IN, List.of(BillStatus.READY_TO_PAY.name(), BillStatus.PENDING.name())));
-            BasicSpec<Bill> inactiveDate = new BasicSpec<>(new SearchCriteria("expiryDate",SearchOperation.GREATER_THAN, ZonedDateTime.now()));
-            Pageable pageable = PageRequest.of(0, 1, Sort.by("id").descending());
-
-            Page<Bill> bills = billRepository.findAll(Specification.where(orderCheckoutPaymentIdEquals).and(statusIn).and(inactiveDate), pageable);
-            if (bills.getContent().size()>0){//assert that only one active bill per checkout payment
-                Bill bill = bills.getContent().get(0);
-                dto.setActiveBillId(bill.getId());
+            Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("id").descending());
+            List<Bill> bills = billRepository.findByOrderCheckoutPaymentId(ocp.getId(), pageable);
+            dto.setVirtualAccounts(new ArrayList<>());
+            if(!bills.isEmpty()){
+                Bill bill = bills.get(0);
+                dto.setBillId(bill.getId());
+                dto.setPaymentDate(bill.getPaymentDate());
                 dto.setExpiryDate(bill.getExpiryDate());
-                dto.setVirtualAccounts(xenditService.findByBillId(bill.getId()));
+
+                List<XenditClosedVa> virtualAccounts = xenditService.findByBillId(bill.getId());
+                List<PaymentInstructionVADto> vaDto = virtualAccounts.stream().map(it -> PaymentInstructionVADto.builder()
+                        .accountName(it.getName())
+                        .bankCode(it.getBankCode())
+                        .fullVaNumber(it.getFullVaNumber())
+                        .build()).collect(Collectors.toList());
+                dto.setVirtualAccounts(vaDto);
             }
             return dto;
         }).collect(Collectors.toList());
@@ -198,25 +225,33 @@ public class OrderPaymentService {
             orderSpec = orderSpec.and(new BasicSpec<>(new SearchCriteria("productId", SearchOperation.IN, productIds)));
         }
 
-        if(request.getPeriodFrom()!=null){
+        if (request.getPeriodFrom() != null) {
             ZonedDateTime start = DateUtils.toZoneDateTime(request.getPeriodFrom(), true);
             orderSpec = orderSpec.and(new BasicSpec<>(new SearchCriteria("checkoutDate", SearchOperation.GREATER_THAN_EQUALS, start)));
         }
 
-        if(request.getPeriodUntil()!=null){
+        if (request.getPeriodUntil() != null) {
             ZonedDateTime end = DateUtils.toZoneDateTime(request.getPeriodUntil(), true);
             orderSpec = orderSpec.and(new BasicSpec<>(new SearchCriteria("checkoutDate", SearchOperation.LESSER_THAN_EQUALS, end)));
         }
 
-        orderSpec = orderSpec.and(new BasicSpec<>(new SearchCriteria("status", SearchOperation.IN, List.of(OrderStatus.WAITING_TO_CREATE_BILL.name(), OrderStatus.WAITING_FOR_PAYMENT.name(), OrderStatus.IN_PROGRESS_PRODUCTION))));
+        orderSpec = orderSpec.and(new BasicSpec<>(new SearchCriteria("status", SearchOperation.IN, List.of(OrderStatus.WAITING_TO_CREATE_BILL.name(), OrderStatus.WAITING_FOR_PAYMENT.name(), OrderStatus.IN_PROGRESS_PRODUCTION.name()))));
         List<Order> orders = orderRepository.findAll(orderSpec);
         List<Long> orderCheckoutIds = orders.stream().map(Order::getOrderCheckoutId).collect(Collectors.toList());
         Page<OrderCheckout> orderCheckouts = orderCheckoutRepository.findAll(Specification.where(new BasicSpec<>(new SearchCriteria("id", SearchOperation.IN, orderCheckoutIds))), pageable);
         return orderCheckouts.map(it -> {
+            Pageable paymentPageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("sequenceNo").ascending());
+            List<OrderCheckoutPayment> checkoutPayments = orderCheckoutPaymentRepository.findByOrderCheckoutId(it.getId(), paymentPageable);
+            List<SimpleCheckoutPaymentDto> payments = checkoutPayments.stream().map(pay -> SimpleCheckoutPaymentDto.builder().id(pay.getId())
+                    .isPaid(pay.isPaid())
+                    .amount(pay.getAmount())
+                    .sequenceNo(pay.getSequenceNo())
+                    .paymentDate(pay.getPaymentDate())
+                    .build()).collect(Collectors.toList());
             List<CheckoutOrderDetailDto> orderDto = orders.stream().map(order -> CheckoutOrderDetailDto.builder()
                     .orderId(order.getId())
                     .orderCode(order.getOrderCode())
-                    .orderStatus(order.getStatus())
+                    .orderStatus(OrderStatus.valueOf(order.getStatus()).getLabel())
                     .productName(order.getProductName())
                     .grandTotal(order.getGrandTotal())
                     .build()).collect(Collectors.toList());
@@ -226,13 +261,17 @@ public class OrderPaymentService {
                     .customerName(it.getCustomerName())
                     .customerEmail(it.getCustomerEmail())
                     .orders(orderDto)
+                    .grandTotalCheckout(it.getGrandTotal())
+                    .paymentTerm(it.getPaymentTerm())
+                    .createdDate(it.getCreatedDate())
+                    .payments(payments)
                     .build();
         });
     }
 
     @Transactional
     public Bill createVaBillPayment(CreateVaBillPaymentRequest request) throws InvalidRequestException, ObjectToJsonStringException {
-        Optional<OrderCheckoutPayment> orderCheckoutPaymentOpt = orderCheckoutPaymentRepository.findByOrderCheckoutIdAndSequenceNo(request.getOrderCheckoutId(), request.getSequenceNo());
+        Optional<OrderCheckoutPayment> orderCheckoutPaymentOpt = orderCheckoutPaymentRepository.findById(request.getOrderCheckoutPaymentId());
         if (orderCheckoutPaymentOpt.isEmpty()) {
             throw new InvalidRequestException("Order Checkout is not existed", null);
         }
@@ -243,7 +282,7 @@ public class OrderPaymentService {
         }
         OrderCheckout orderCheckout = orderCheckoutOpt.get();
         Optional<Customer> customerOpt = customerRepository.findByEmail(orderCheckout.getCustomerEmail());
-        if(customerOpt.isEmpty()){
+        if (customerOpt.isEmpty()) {
             throw new InvalidRequestException("Order Checkout is not existed", null);
         }
 
@@ -256,13 +295,13 @@ public class OrderPaymentService {
         bill.setAmount(orderCheckoutPayment.getAmount());
         bill.setCreatedDate(ZonedDateTime.now());
         bill.setExpiryDate(ZonedDateTime.now().plusDays(1));
-        bill.setRemarks(DEFAULT_REMARKS + request.getSequenceNo());
+        bill.setRemarks(DEFAULT_REMARKS + orderCheckoutPayment.getSequenceNo());
         bill.setStatus(BillStatus.PENDING.name());
         bill.setCreatedBy(request.getCreatedBy());
         bill.setPaymentPartner(PaymentPartner.XENDIT.name());//possible to change/add another payment partner in future
         billRepository.save(bill);
         xenditService.createVaClose(bill);//possible to change/add another payment partner in future
-        if (request.getSequenceNo() == 1) {
+        if (orderCheckoutPayment.getSequenceNo() == 1) {
             List<Order> orders = orderRepository.findByOrderCheckoutId(orderCheckoutPayment.getOrderCheckoutId());
             for (Order order : orders) {
                 historicalOrderStatusService.changeStatus(ChangeStatusRequest.builder()

@@ -172,7 +172,10 @@ public class XenditService {
             closedVAMap.put("is_single_use", true);
             closedVAMap.put("expected_amount", xenditClosedVa.getExpectedAmount().toPlainString());
             closedVAMap.put("expiration_date", xenditClosedVa.getExpirationDate().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+            xenditClosedVa.setRequestPayload(objectMapperService.writeToString(closedVAMap));
+            xenditClosedVaRepository.save(xenditClosedVa);
             FixedVirtualAccount virtualAccount = xenditClient.fixedVirtualAccount.createClosed(closedVAMap);
+            xenditClosedVa.setMerchantCode(virtualAccount.getMerchantCode());
             xenditClosedVa.setStatus(virtualAccount.getStatus());
             xenditClosedVa.setXenditId(virtualAccount.getId());
             xenditClosedVa.setResponseDate(ZonedDateTime.now());

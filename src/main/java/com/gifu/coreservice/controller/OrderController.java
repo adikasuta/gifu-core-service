@@ -2,8 +2,8 @@ package com.gifu.coreservice.controller;
 
 import com.gifu.coreservice.entity.User;
 import com.gifu.coreservice.model.dto.CheckoutOrderDto;
+import com.gifu.coreservice.model.dto.CheckoutPaymentDto;
 import com.gifu.coreservice.model.dto.DashboardOrderDto;
-import com.gifu.coreservice.model.dto.ProductCategoryDto;
 import com.gifu.coreservice.model.request.ConfirmOrderRequest;
 import com.gifu.coreservice.model.request.CreateVaBillPaymentRequest;
 import com.gifu.coreservice.model.request.SearchCheckoutOrderRequest;
@@ -22,9 +22,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.List;
 
 @Slf4j
@@ -52,10 +50,10 @@ public class OrderController {
                     .query(query)
                     .statuses(statuses)
                     .build();
-            if(StringUtils.hasText(periodFrom)){
+            if (StringUtils.hasText(periodFrom)) {
                 request.setPeriodFrom(LocalDate.parse(periodFrom, DateTimeFormatter.ISO_LOCAL_DATE));
             }
-            if(StringUtils.hasText(periodUntil)){
+            if (StringUtils.hasText(periodUntil)) {
                 request.setPeriodUntil(LocalDate.parse(periodUntil, DateTimeFormatter.ISO_LOCAL_DATE));
             }
             Page<DashboardOrderDto> result = orderService.getDashboardOrderPage(request, pageable);
@@ -73,7 +71,7 @@ public class OrderController {
             @RequestBody ConfirmOrderRequest request
     ) {
         try {
-            User context =  SessionUtils.getUserContext();
+            User context = SessionUtils.getUserContext();
             request.setUpdaterEmail(context.getEmail());
             orderService.confirmOrder(request);
             return ResponseEntity.ok(new SingleResourceResponse<>("Success"));
@@ -96,14 +94,29 @@ public class OrderController {
             request.setProductType(productType);
             request.setQuery(query);
             request.setProductCategoryId(productCategoryId);
-            if(StringUtils.hasText(periodFrom)){
+            if (StringUtils.hasText(periodFrom)) {
                 request.setPeriodFrom(LocalDate.parse(periodFrom, DateTimeFormatter.ISO_LOCAL_DATE));
             }
-            if(StringUtils.hasText(periodUntil)){
+            if (StringUtils.hasText(periodUntil)) {
                 request.setPeriodUntil(LocalDate.parse(periodUntil, DateTimeFormatter.ISO_LOCAL_DATE));
             }
             Page<CheckoutOrderDto> result = orderPaymentService.findCheckoutOrderList(request, pageable);
             return ResponseEntity.ok(new SingleResourceResponse<>(result));
+        } catch (Exception ex) {
+            log.error("ERROR POST VA BILL: " + ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
+        }
+    }
+
+    @GetMapping("/order-checkout/{orderCheckoutId}")
+    public ResponseEntity<SingleResourceResponse<List<CheckoutPaymentDto>>> getCheckoutDetails(
+            @PathVariable Long orderCheckoutId
+    ) {
+        try {
+            List<CheckoutPaymentDto> payments = orderPaymentService.findCheckoutPaymentByOrderCheckoutId(orderCheckoutId);
+            return ResponseEntity.ok(new SingleResourceResponse<>(payments));
         } catch (Exception ex) {
             log.error("ERROR POST VA BILL: " + ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
@@ -117,7 +130,7 @@ public class OrderController {
             @RequestBody CreateVaBillPaymentRequest request
     ) {
         try {
-            User context =  SessionUtils.getUserContext();
+            User context = SessionUtils.getUserContext();
             request.setCreatedBy(context.getEmail());
             orderPaymentService.createVaBillPayment(request);
             return ResponseEntity.ok(new SingleResourceResponse<>("Success"));

@@ -1,6 +1,7 @@
 package com.gifu.coreservice.repository;
 
 import com.gifu.coreservice.entity.OrderCheckoutPayment;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,5 +12,5 @@ import java.util.Optional;
 public interface OrderCheckoutPaymentRepository extends JpaRepository<OrderCheckoutPayment, Long> {
     Optional<OrderCheckoutPayment> findByOrderCheckoutIdAndSequenceNo(Long orderCheckoutId, Integer sequenceNo);
 
-    List<OrderCheckoutPayment> findByOrderCheckoutId(Long orderCheckoutId);
+    List<OrderCheckoutPayment> findByOrderCheckoutId(Long orderCheckoutId, Pageable pageable);
 }

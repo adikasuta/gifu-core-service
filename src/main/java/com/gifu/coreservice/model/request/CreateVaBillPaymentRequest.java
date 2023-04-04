@@ -4,7 +4,6 @@ import lombok.Data;
 
 @Data
 public class CreateVaBillPaymentRequest {
-    private Long orderCheckoutId;
-    private Integer sequenceNo;
+    private Long orderCheckoutPaymentId;
     private String createdBy;
 }

@@ -5,16 +5,13 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
-import java.util.List;
 
 @Data
 @Builder
-public class CheckoutPaymentDto {
-    private Long orderCheckoutPaymentId;
+public class SimpleCheckoutPaymentDto {
+    private Long id;
     private Integer sequenceNo;
     private BigDecimal amount;
-    private Long billId;
     private ZonedDateTime paymentDate;
-    private ZonedDateTime expiryDate;
-    private List<PaymentInstructionVADto> virtualAccounts;
+    private boolean isPaid;
 }

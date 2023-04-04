@@ -299,6 +299,9 @@ public class TimelineService {
             return;
         }
         OrderCheckoutPayment orderCheckoutPayment = orderCheckoutPaymentOpt.get();
+        orderCheckoutPayment.setPaid(true);
+        orderCheckoutPayment.setPaymentDate(ZonedDateTime.now());
+        orderCheckoutPaymentRepository.save(orderCheckoutPayment);
         Optional<OrderCheckout> orderCheckoutOpt = orderCheckoutRepository.findById(orderCheckoutPayment.getOrderCheckoutId());
         if (orderCheckoutOpt.isEmpty()) {
             log.error("Bill (id=" + bill.getId() + ") is not affiliated with any orderCheckoutPayment");

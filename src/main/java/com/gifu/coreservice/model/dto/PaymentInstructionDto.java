@@ -9,11 +9,10 @@ import java.util.List;
 
 @Data
 @Builder
-public class CheckoutPaymentDto {
+public class PaymentInstructionDto {
     private Long orderCheckoutPaymentId;
-    private Integer sequenceNo;
-    private BigDecimal amount;
     private Long billId;
+    private BigDecimal amount;
     private ZonedDateTime paymentDate;
     private ZonedDateTime expiryDate;
     private List<PaymentInstructionVADto> virtualAccounts;
