@@ -26,9 +26,6 @@ public class SessionUtils {
        if(principal instanceof User){
           return (User) principal;
        }
-        User anon = new User();
-       anon.setEmail("anonymous user");
-       return anon;
-//       throw new InvalidRequestException("User have not login yet", null);
+       throw new InvalidRequestException("User have not login yet", null);
     }
 }
