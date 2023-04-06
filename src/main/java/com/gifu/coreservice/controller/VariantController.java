@@ -98,11 +98,11 @@ public class VariantController {
         }
     }
 
-    @PostMapping(value = "/{id}/content", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PostMapping(value = "/{id}/content", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<SingleResourceResponse<String>> saveContent(
             @PathVariable Long id,
-            @RequestPart("payload") String payload,
-            @RequestPart(value = "file", required = false) MultipartFile file
+            @RequestParam(value = "payload") String payload,
+            @RequestParam(value = "file", required = false) MultipartFile file
     ) {
         try {
             User user = SessionUtils.getUserContext();

@@ -29,10 +29,10 @@ public class ProductController {
     @Autowired
     private ObjectMapperService objectMapperService;
 
-    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<SingleResourceResponse<String>> saveProduct(
-            @RequestPart("payload") String payload,
-            @RequestPart(value = "file", required = false) MultipartFile file
+            @RequestParam("payload") String payload,
+            @RequestParam(value = "file", required = false) MultipartFile file
     ) {
         try {
             User user = SessionUtils.getUserContext();

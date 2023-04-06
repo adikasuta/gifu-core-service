@@ -65,10 +65,10 @@ public class UserController {
         }
     }
 
-    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<SingleResourceResponse<UserDto>> postUser(
-            @RequestPart("payload") String payload,
-            @RequestPart("file") MultipartFile file
+            @RequestParam("payload") String payload,
+            @RequestParam(value = "file", required = false) MultipartFile file
     ) {
         try {
             User user = SessionUtils.getUserContext();
@@ -104,10 +104,10 @@ public class UserController {
         }
     }
 
-    @PatchMapping(value = "/", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PatchMapping(value = "/", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<SingleResourceResponse<UserDto>> patchUser(
-            @RequestPart("payload") String payload,
-            @RequestPart("file") MultipartFile file
+            @RequestParam("payload") String payload,
+            @RequestParam(value = "file", required = false) MultipartFile file
     ) {
         try {
             User user = SessionUtils.getUserContext();
@@ -140,10 +140,10 @@ public class UserController {
         }
     }
 
-    @PatchMapping(value = "/profile", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PatchMapping(value = "/profile", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<SingleResourceResponse<UserDto>> patchProfile(
-            @RequestPart("payload") String payload,
-            @RequestPart("file") MultipartFile file
+            @RequestParam("payload") String payload,
+            @RequestParam(value = "file", required = false) MultipartFile file
     ) {
         try {
             User user = SessionUtils.getUserContext();
