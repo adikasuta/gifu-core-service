@@ -32,7 +32,7 @@ public class GifuConfiguration {
     @Bean
     public CommonsMultipartResolver multipartResolver() {
         CommonsMultipartResolver resolver = new CommonsMultipartResolver();
-        resolver.setMaxUploadSize(3097152); // 2MB in bytes
+        resolver.setMaxUploadSize(3097152); // 3MB in bytes
         return resolver;
     }
 }
