@@ -20,4 +20,5 @@ public class UserDto {
     private String address;
     private Integer gender;
     private LocalDate birthDate;
+    private String referralToken;
 }

@@ -1,5 +1,6 @@
 package com.gifu.coreservice.controller.publicapi;
 
+import com.gifu.coreservice.enumeration.GenderEnum;
 import com.gifu.coreservice.enumeration.OrderStatus;
 import com.gifu.coreservice.enumeration.ProductType;
 import com.gifu.coreservice.enumeration.VariantTypeEnum;
@@ -32,13 +33,24 @@ public class ReferenceController {
     @GetMapping("/order-status")
     public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getOrderStatus() {
         List<ValueTextDto> options = new ArrayList<>();
-        for(OrderStatus status : List.of(
+        for (OrderStatus status : List.of(
                 OrderStatus.WAITING_FOR_CONFIRMATION,
                 OrderStatus.WAITING_TO_CREATE_BILL,
                 OrderStatus.WAITING_FOR_PAYMENT,
                 OrderStatus.IN_PROGRESS_PRODUCTION,
-                OrderStatus.DONE)){
+                OrderStatus.DONE)) {
             options.add(new ValueTextDto(status.name(), status.getLabel()));
+        }
+        return ResponseEntity.ok(new SingleResourceResponse<>(options));
+    }
+
+    @GetMapping("/gender")
+    public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getGender() {
+        List<ValueTextDto> options = new ArrayList<>();
+        for (GenderEnum gender : List.of(
+                GenderEnum.FEMALE,
+                GenderEnum.MALE)) {
+            options.add(new ValueTextDto(String.valueOf(gender.getCode()), gender.getText()));
         }
         return ResponseEntity.ok(new SingleResourceResponse<>(options));
     }
@@ -64,6 +76,7 @@ public class ReferenceController {
         List<ValueTextDto> variants = productVariantService.getVariantReference();
         return ResponseEntity.ok(new SingleResourceResponse<>(variants));
     }
+
     @GetMapping("/variant/{variantTypeCode}")
     public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getVariantsByVariantTypeCode(
             @PathVariable VariantTypeEnum variantTypeCode
@@ -71,6 +84,7 @@ public class ReferenceController {
         List<ValueTextDto> variants = productVariantService.getVariantReferenceByVariantTypeCode(variantTypeCode);
         return ResponseEntity.ok(new SingleResourceResponse<>(variants));
     }
+
     @GetMapping("/roles")
     public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getRoles() {
         List<ValueTextDto> roles = userService.getRolesReference();
@@ -88,6 +102,7 @@ public class ReferenceController {
         List<ValueTextDto> options = administrativeAreaService.getProvinceReference();
         return ResponseEntity.ok(new SingleResourceResponse<>(options));
     }
+
     @GetMapping("/provinces/{provinceId}/cities")
     public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getCities(
             @PathVariable String provinceId

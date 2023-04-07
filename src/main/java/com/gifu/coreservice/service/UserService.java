@@ -1,7 +1,6 @@
 package com.gifu.coreservice.service;
 
 import com.gifu.coreservice.entity.CsReferral;
-import com.gifu.coreservice.entity.Permission;
 import com.gifu.coreservice.entity.Role;
 import com.gifu.coreservice.entity.User;
 import com.gifu.coreservice.enumeration.PermissionEnum;
@@ -32,7 +31,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,18 +55,48 @@ public class UserService {
         return roles.stream().map(it -> new ValueTextDto(String.valueOf(it.getId()), it.getName())).collect(Collectors.toList());
     }
 
-    public boolean hasPermission(PermissionEnum permission, Long userId){
+    public boolean hasPermission(PermissionEnum permission, Long userId) {
         Optional<User> userOpt = userRepository.findById(userId);
-        if(userOpt.isPresent()){
+        if (userOpt.isPresent()) {
             User user = userOpt.get();
             Collection<? extends GrantedAuthority> permissions = user.getAuthorities();
-            for (GrantedAuthority it : permissions){
-                if (permission.name().equals(it.getAuthority())){
+            for (GrantedAuthority it : permissions) {
+                if (permission.name().equals(it.getAuthority())) {
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    public UserDto getUser(Long userId) throws InvalidRequestException {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            throw new InvalidRequestException("User is not found");
+        }
+        User user = userOpt.get();
+
+        UserDto mapped = UserDto.builder().id(user.getId())
+                .name(user.getName())
+                .picture(user.getPicture())
+                .email(user.getEmail())
+                .phoneNo(user.getPhoneNumber())
+                .address(user.getAddress())
+                .gender(user.getGender())
+                .birthDate(user.getBirthDate())
+                .active(user.getIsAccountNonExpired() && user.getIsAccountNonLocked() && user.getIsCredentialsNonExpired() && user.getIsEnabled())
+                .build();
+        List<CsReferral> activeReferrals = csReferralRepository.findActiveByUserId(userId);
+        if (!activeReferrals.isEmpty()) {
+            mapped.setReferralToken(activeReferrals.get(0).getToken());
+        }
+        if (user.getRoleId() != null) {
+            Optional<Role> roleOpt = roleRepository.findById(user.getRoleId());
+            roleOpt.ifPresent(role -> {
+                mapped.setRoleName(role.getName());
+            });
+        }
+        return mapped;
     }
 
     public Page<UserDto> searchUser(SearchUserRequest request, Pageable pageable) {
@@ -180,8 +211,6 @@ public class UserService {
             user.setPicture(filepath);
         }
         user.setName(request.getName());
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
         user.setPhoneNumber(request.getPhoneNo());
         user.setAddress(request.getAddress());
         user.setGender(request.getGender());

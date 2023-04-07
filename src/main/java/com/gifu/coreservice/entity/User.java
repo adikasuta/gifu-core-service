@@ -58,10 +58,6 @@ public class User implements UserDetails {
     @Column(name = "is_enabled")
     private Boolean isEnabled;
 
-    @OneToMany(fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id")
-    private Set<CsReferral> csReferral;
-
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "role_id")
 //    private Role role;

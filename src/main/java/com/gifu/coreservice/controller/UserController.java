@@ -50,9 +50,21 @@ public class UserController {
             );
         }
     }
-
+    @PostMapping(value = "/profile/cs-referral")
+    public ResponseEntity<SingleResourceResponse<String>> generateMyCsReferral(
+    ) {
+        try {
+            User user = SessionUtils.getUserContext();
+            userService.generateNewReferralCode(user.getId());
+            return ResponseEntity.ok(new SingleResourceResponse<>("Success generate new referral code"));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
+        }
+    }
     @PostMapping(value = "/{userId}/cs-referral")
-    public ResponseEntity<SingleResourceResponse<String>> postUser(
+    public ResponseEntity<SingleResourceResponse<String>> generateCsReferral(
             @PathVariable("userId") Long userId
     ) {
         try {
@@ -140,7 +152,24 @@ public class UserController {
         }
     }
 
-    @PatchMapping(value = "/profile", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @GetMapping("/profile")
+    public ResponseEntity<SingleResourceResponse<UserDto>> getProfile() {
+        try {
+            User user = SessionUtils.getUserContext();
+            UserDto result = userService.getUser(user.getId());
+            return ResponseEntity.ok(new SingleResourceResponse<>(result));
+        } catch (InvalidRequestException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    new SingleResourceResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value())
+            );
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
+        }
+    }
+
+    @PostMapping(value = "/profile", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<SingleResourceResponse<UserDto>> patchProfile(
             @RequestParam("payload") String payload,
             @RequestParam(value = "file", required = false) MultipartFile file
