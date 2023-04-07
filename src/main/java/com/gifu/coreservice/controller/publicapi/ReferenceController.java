@@ -1,9 +1,6 @@
 package com.gifu.coreservice.controller.publicapi;
 
-import com.gifu.coreservice.enumeration.GenderEnum;
-import com.gifu.coreservice.enumeration.OrderStatus;
-import com.gifu.coreservice.enumeration.ProductType;
-import com.gifu.coreservice.enumeration.VariantTypeEnum;
+import com.gifu.coreservice.enumeration.*;
 import com.gifu.coreservice.model.dto.ValueTextDto;
 import com.gifu.coreservice.model.response.SingleResourceResponse;
 import com.gifu.coreservice.service.*;
@@ -51,6 +48,15 @@ public class ReferenceController {
                 GenderEnum.FEMALE,
                 GenderEnum.MALE)) {
             options.add(new ValueTextDto(String.valueOf(gender.getCode()), gender.getText()));
+        }
+        return ResponseEntity.ok(new SingleResourceResponse<>(options));
+    }
+
+    @GetMapping("/pricing-range-filter")
+    public ResponseEntity<SingleResourceResponse<List<ValueTextDto>>> getPricingRangeFilter() {
+        List<ValueTextDto> options = new ArrayList<>();
+        for (PricingRangeFilter item : PricingRangeFilter.values()) {
+            options.add(new ValueTextDto(item.name(), item.getText()));
         }
         return ResponseEntity.ok(new SingleResourceResponse<>(options));
     }

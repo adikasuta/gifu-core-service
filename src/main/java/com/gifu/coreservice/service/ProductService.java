@@ -2,6 +2,7 @@ package com.gifu.coreservice.service;
 
 import com.gifu.coreservice.entity.*;
 import com.gifu.coreservice.enumeration.CodePrefix;
+import com.gifu.coreservice.enumeration.PricingRangeFilter;
 import com.gifu.coreservice.enumeration.SearchOperation;
 import com.gifu.coreservice.enumeration.VariantTypeEnum;
 import com.gifu.coreservice.exception.InvalidRequestException;
@@ -25,10 +26,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.transaction.Transactional;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,7 +57,7 @@ public class ProductService {
     public String generateCode() {
         String token = com.gifu.coreservice.utils.StringUtils.generateRandomNumericString(5);
         token = CodePrefix.PRODUCT.getPrefix().concat(token);
-        if(productRepository.countByProductCode(token)>0){
+        if (productRepository.countByProductCode(token) > 0) {
             return generateCode();
         }
         return token;
@@ -229,6 +229,40 @@ public class ProductService {
             ));
 
             specOr = specOr.or(likeName).or(productCategoriesIn);
+        }
+
+        if (request.getPricingRangeFilter() != null) {
+            Map<Long, BigDecimal> mapProductLowestPrice = new HashMap<>();
+            List<PricingRange> pricingRanges = pricingRangeRepository.findAll();
+            for (PricingRange it : pricingRanges) {
+                BigDecimal lowestPrice = mapProductLowestPrice.get(it.getProductId());
+                if(lowestPrice==null){
+                    mapProductLowestPrice.put(it.getProductId(), it.getPrice());
+                } else if(it.getPrice().compareTo(lowestPrice)<0) {
+                    mapProductLowestPrice.put(it.getProductId(), it.getPrice());
+                }
+            }
+            List<Long> productIds = new ArrayList<>();
+            for(Map.Entry<Long, BigDecimal> entry : mapProductLowestPrice.entrySet()){
+                if(request.getPricingRangeFilter().getLow().compareTo(entry.getValue())<=0){
+                    if(request.getPricingRangeFilter().getHigh()==null){
+                        productIds.add(entry.getKey());
+                        continue;
+                    }
+                    if(request.getPricingRangeFilter().getHigh().compareTo(entry.getValue())>=0){
+                        productIds.add(entry.getKey());
+                    }
+                }
+            }
+
+            if(productIds.isEmpty()){
+                return Page.empty(pageable);
+            }
+
+            BasicSpec<Product> productIdsIn = new BasicSpec<>(new SearchCriteria(
+                    "id", SearchOperation.IN, productIds
+            ));
+            specAnd.and(productIdsIn);
         }
 
         return productRepository.findAll(

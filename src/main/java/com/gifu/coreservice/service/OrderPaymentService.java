@@ -285,6 +285,7 @@ public class OrderPaymentService {
             throw new InvalidRequestException("Order Checkout is not existed", null);
         }
         OrderCheckout orderCheckout = orderCheckoutOpt.get();
+        //TODO: fix, no need to take data from customer, just take it from order checkout
         Optional<Customer> customerOpt = customerRepository.findByEmail(orderCheckout.getCustomerEmail());
         if (customerOpt.isEmpty()) {
             throw new InvalidRequestException("Order Checkout is not existed", null);

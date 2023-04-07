@@ -11,6 +11,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -51,6 +52,10 @@ public class BasicSpec<T> implements Specification<T> {
                     return builder.greaterThanOrEqualTo(
                             root.get(criteria.getKey()), (ZonedDateTime) criteria.getValue());
                 }
+                if (root.get(criteria.getKey()).getJavaType() == BigDecimal.class) {
+                    return builder.greaterThanOrEqualTo(
+                            root.get(criteria.getKey()), (BigDecimal) criteria.getValue());
+                }
                 return builder.greaterThanOrEqualTo(
                         root.get(criteria.getKey()), criteria.getValue().toString());
             case LESSER_THAN_EQUALS:
@@ -61,6 +66,10 @@ public class BasicSpec<T> implements Specification<T> {
                 if (root.get(criteria.getKey()).getJavaType() == ZonedDateTime.class) {
                     return builder.lessThanOrEqualTo(
                             root.get(criteria.getKey()), (ZonedDateTime) criteria.getValue());
+                }
+                if (root.get(criteria.getKey()).getJavaType() == BigDecimal.class) {
+                    return builder.lessThanOrEqualTo(
+                            root.get(criteria.getKey()), (BigDecimal) criteria.getValue());
                 }
                 return builder.lessThanOrEqualTo(
                         root.get(criteria.getKey()), criteria.getValue().toString());
@@ -73,6 +82,10 @@ public class BasicSpec<T> implements Specification<T> {
                     return builder.lessThan(
                             root.get(criteria.getKey()), (ZonedDateTime) criteria.getValue());
                 }
+                if (root.get(criteria.getKey()).getJavaType() == BigDecimal.class) {
+                    return builder.lessThan(
+                            root.get(criteria.getKey()), (BigDecimal) criteria.getValue());
+                }
                 return builder.lessThan(
                         root.get(criteria.getKey()), criteria.getValue().toString());
             case GREATER_THAN:
@@ -83,6 +96,10 @@ public class BasicSpec<T> implements Specification<T> {
                 if (root.get(criteria.getKey()).getJavaType() == ZonedDateTime.class) {
                     return builder.greaterThan(
                             root.get(criteria.getKey()), (ZonedDateTime) criteria.getValue());
+                }
+                if (root.get(criteria.getKey()).getJavaType() == BigDecimal.class) {
+                    return builder.greaterThan(
+                            root.get(criteria.getKey()), (BigDecimal) criteria.getValue());
                 }
                 return builder.greaterThan(
                         root.get(criteria.getKey()), criteria.getValue().toString());

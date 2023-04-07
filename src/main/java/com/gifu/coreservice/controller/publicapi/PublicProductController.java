@@ -1,5 +1,6 @@
 package com.gifu.coreservice.controller.publicapi;
 
+import com.gifu.coreservice.enumeration.PricingRangeFilter;
 import com.gifu.coreservice.model.dto.ProductSearchDto;
 import com.gifu.coreservice.model.dto.dashboard.product.ProductOrderDto;
 import com.gifu.coreservice.model.dto.order.product.VariantReferenceDto;
@@ -58,6 +59,7 @@ public class PublicProductController {
             @RequestParam(required = false) String searchQuery,
             @RequestParam(required = false) Long productCategoryId,
             @RequestParam(required = false) String productType,
+            @RequestParam(required = false) PricingRangeFilter pricingRangeFilter,
             Pageable pageable
     ) {
         try {
@@ -67,6 +69,7 @@ public class PublicProductController {
                     .searchQuery(searchQuery)
                     .productType(productType)
                     .productCategoryId(productCategoryId)
+                    .pricingRangeFilter(pricingRangeFilter)
                     .build();
             Page<ProductSearchDto> result = productService.searchProductThenMap(request, pageable);
             return ResponseEntity.ok(new SingleResourceResponse<>(result));
