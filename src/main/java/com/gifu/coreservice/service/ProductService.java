@@ -262,7 +262,7 @@ public class ProductService {
             BasicSpec<Product> productIdsIn = new BasicSpec<>(new SearchCriteria(
                     "id", SearchOperation.IN, productIds
             ));
-            specAnd.and(productIdsIn);
+            specAnd = specAnd.and(productIdsIn);
         }
 
         return productRepository.findAll(
