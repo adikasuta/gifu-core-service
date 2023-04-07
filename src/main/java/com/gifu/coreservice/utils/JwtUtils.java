@@ -1,6 +1,9 @@
 package com.gifu.coreservice.utils;
 
 import com.gifu.coreservice.entity.User;
+import com.gifu.coreservice.exception.InvalidRequestException;
+import com.gifu.coreservice.service.UserPermissionService;
+import com.gifu.coreservice.service.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -58,7 +61,7 @@ public class JwtUtils {
 
     }
 
-    public static String createJwtSignedHMAC(User user) throws InvalidKeySpecException, NoSuchAlgorithmException, URISyntaxException, IOException {
+    public static String createJwtSignedHMAC(User user, UserPermissionService userPermissionService) throws InvalidKeySpecException, NoSuchAlgorithmException, URISyntaxException, IOException, InvalidRequestException {
 
         PrivateKey privateKey = getPrivateKey();
 
@@ -69,7 +72,7 @@ public class JwtUtils {
                 .claim("userId", user.getId())
                 .claim("email", user.getEmail())
                 .claim("roleId", user.getRoleId())
-                .claim("permissions", user.getAuthorities())
+                .claim("permissions", userPermissionService.getPermissionCodesByUserId(user.getId()))
                 .setSubject(user.getName())
                 .setId(UUID.randomUUID().toString())
                 .setIssuedAt(Date.from(now))

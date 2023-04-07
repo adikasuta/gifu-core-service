@@ -1,6 +1,7 @@
 package com.gifu.coreservice.service;
 
 import com.gifu.coreservice.entity.User;
+import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.repository.UserRepository;
 import com.gifu.coreservice.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,8 @@ public class AuthService {
     private AuthenticationManager authenticationManager;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private UserPermissionService userPermissionService;
 
     private User findByEmailAndPassword(String email, String password) {
         Authentication authenticate = authenticationManager
@@ -32,9 +35,9 @@ public class AuthService {
         return (User) authenticate.getPrincipal();
     }
 
-    public String login(String email, String password) throws InvalidKeySpecException, NoSuchAlgorithmException, URISyntaxException, IOException {
+    public String login(String email, String password) throws InvalidKeySpecException, NoSuchAlgorithmException, URISyntaxException, IOException, InvalidRequestException {
         User user = findByEmailAndPassword(email, password);
-        return JwtUtils.createJwtSignedHMAC(user);
+        return JwtUtils.createJwtSignedHMAC(user, userPermissionService);
     }
 
     public User changePassword(String email, String oldPassword, String newPassword) {

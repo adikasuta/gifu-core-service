@@ -1,12 +1,16 @@
 package com.gifu.coreservice.controller;
 
+import com.gifu.coreservice.entity.Permission;
 import com.gifu.coreservice.entity.User;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.UserDto;
+import com.gifu.coreservice.model.dto.UserPermissionDto;
 import com.gifu.coreservice.model.request.SaveProfileRequest;
 import com.gifu.coreservice.model.request.SearchUserRequest;
+import com.gifu.coreservice.model.request.UpdateUserPermissionRequest;
 import com.gifu.coreservice.model.response.SingleResourceResponse;
 import com.gifu.coreservice.service.ObjectMapperService;
+import com.gifu.coreservice.service.UserPermissionService;
 import com.gifu.coreservice.service.UserService;
 import com.gifu.coreservice.utils.SessionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +33,8 @@ public class UserController {
     @Autowired
     private UserService userService;
     @Autowired
+    private UserPermissionService userPermissionService;
+    @Autowired
     private ObjectMapperService objectMapperService;
 
     @GetMapping
@@ -50,6 +56,7 @@ public class UserController {
             );
         }
     }
+
     @PostMapping(value = "/profile/cs-referral")
     public ResponseEntity<SingleResourceResponse<String>> generateMyCsReferral(
     ) {
@@ -63,6 +70,7 @@ public class UserController {
             );
         }
     }
+
     @PostMapping(value = "/{userId}/cs-referral")
     public ResponseEntity<SingleResourceResponse<String>> generateCsReferral(
             @PathVariable("userId") Long userId
@@ -70,6 +78,61 @@ public class UserController {
         try {
             userService.generateNewReferralCode(userId);
             return ResponseEntity.ok(new SingleResourceResponse<>("Success generate new referral code"));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
+        }
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<SingleResourceResponse<UserDto>> getUser(
+            @PathVariable Long userId
+    ) {
+        try {
+            UserDto result = userService.getUser(userId);
+            return ResponseEntity.ok(new SingleResourceResponse<>(result));
+        } catch (InvalidRequestException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    new SingleResourceResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value())
+            );
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
+        }
+    }
+
+    @GetMapping("/{userId}/permissions")
+    public ResponseEntity<SingleResourceResponse<List<UserPermissionDto>>> getUserPermissions(
+            @PathVariable Long userId
+    ) {
+        try {
+            List<UserPermissionDto> result = userPermissionService.getUserPermissions(userId);
+            return ResponseEntity.ok(new SingleResourceResponse<>(result));
+        } catch (InvalidRequestException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    new SingleResourceResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value())
+            );
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
+        }
+    }
+    @PatchMapping("/{userId}/permissions")
+    public ResponseEntity<SingleResourceResponse<String>> updateUserPermissions(
+            @PathVariable Long userId,
+            @RequestBody UpdateUserPermissionRequest request
+    ) {
+        try {
+            User user = SessionUtils.getUserContext();
+            userPermissionService.setUserPermission(userId, request, user.getEmail());
+            return ResponseEntity.ok(new SingleResourceResponse<>("SUCCESS"));
+        } catch (InvalidRequestException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    new SingleResourceResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value())
+            );
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
@@ -85,58 +148,38 @@ public class UserController {
         try {
             User user = SessionUtils.getUserContext();
             SaveProfileRequest request = objectMapperService.readToObject(payload, SaveProfileRequest.class);
-            Pair<User, String> result = userService.createUserAccount(request, file, user.getEmail());
-            User updated = result.getFirst();
-            String generatedPassword = result.getSecond();
-            return ResponseEntity.ok(new SingleResourceResponse<>(
-                    UserDto.builder()
-                            .generatedPassword(generatedPassword)
-                            .id(updated.getId())
-                            .name(updated.getName())
-                            .address(updated.getAddress())
-                            .birthDate(updated.getBirthDate())
-                            .email(updated.getEmail())
-                            .gender(updated.getGender())
-                            .username(updated.getUsername())
-                            .phoneNo(updated.getPhoneNumber())
-                            .build()
-            ));
-        } catch (InvalidRequestException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    new SingleResourceResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value())
-            );
-        } catch (DataIntegrityViolationException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    new SingleResourceResponse<>("Inputted username or email had been used", HttpStatus.BAD_REQUEST.value())
-            );
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
-            );
-        }
-    }
-
-    @PatchMapping(value = "/", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<SingleResourceResponse<UserDto>> patchUser(
-            @RequestParam("payload") String payload,
-            @RequestParam(value = "file", required = false) MultipartFile file
-    ) {
-        try {
-            User user = SessionUtils.getUserContext();
-            SaveProfileRequest request = objectMapperService.readToObject(payload, SaveProfileRequest.class);
-            User updated = userService.updateUserAccount(request.getId(), request, file, user.getEmail());
-            return ResponseEntity.ok(new SingleResourceResponse<>(
-                    UserDto.builder()
-                            .id(updated.getId())
-                            .name(updated.getName())
-                            .address(updated.getAddress())
-                            .birthDate(updated.getBirthDate())
-                            .email(updated.getEmail())
-                            .gender(updated.getGender())
-                            .username(updated.getUsername())
-                            .phoneNo(updated.getPhoneNumber())
-                            .build()
-            ));
+            if (request.getId() == null) {
+                Pair<User, String> result = userService.createUserAccount(request, file, user.getEmail());
+                User updated = result.getFirst();
+                String generatedPassword = result.getSecond();
+                return ResponseEntity.ok(new SingleResourceResponse<>(
+                        UserDto.builder()
+                                .generatedPassword(generatedPassword)
+                                .id(updated.getId())
+                                .name(updated.getName())
+                                .address(updated.getAddress())
+                                .birthDate(updated.getBirthDate())
+                                .email(updated.getEmail())
+                                .gender(updated.getGender())
+                                .username(updated.getUsername())
+                                .phoneNo(updated.getPhoneNumber())
+                                .build()
+                ));
+            } else {
+                User updated = userService.updateUserAccount(request.getId(), request, file, user.getEmail());
+                return ResponseEntity.ok(new SingleResourceResponse<>(
+                        UserDto.builder()
+                                .id(updated.getId())
+                                .name(updated.getName())
+                                .address(updated.getAddress())
+                                .birthDate(updated.getBirthDate())
+                                .email(updated.getEmail())
+                                .gender(updated.getGender())
+                                .username(updated.getUsername())
+                                .phoneNo(updated.getPhoneNumber())
+                                .build()
+                ));
+            }
         } catch (InvalidRequestException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     new SingleResourceResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value())

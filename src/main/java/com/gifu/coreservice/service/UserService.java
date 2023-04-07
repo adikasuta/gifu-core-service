@@ -1,23 +1,21 @@
 package com.gifu.coreservice.service;
 
-import com.gifu.coreservice.entity.CsReferral;
-import com.gifu.coreservice.entity.Role;
-import com.gifu.coreservice.entity.User;
+import com.gifu.coreservice.entity.*;
 import com.gifu.coreservice.enumeration.PermissionEnum;
 import com.gifu.coreservice.enumeration.SearchOperation;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.UserDto;
+import com.gifu.coreservice.model.dto.UserPermissionDto;
 import com.gifu.coreservice.model.dto.ValueTextDto;
 import com.gifu.coreservice.model.request.SaveProfileRequest;
 import com.gifu.coreservice.model.request.SearchUserRequest;
 import com.gifu.coreservice.model.request.SignupRequest;
-import com.gifu.coreservice.repository.CsReferralRepository;
-import com.gifu.coreservice.repository.RoleRepository;
-import com.gifu.coreservice.repository.UserRepository;
+import com.gifu.coreservice.repository.*;
 import com.gifu.coreservice.repository.spec.BasicSpec;
 import com.gifu.coreservice.repository.spec.SearchCriteria;
 import com.gifu.coreservice.utils.FileUtils;
 import com.gifu.coreservice.utils.StringUtils;
+import liquibase.pro.packaged.P;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -31,9 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,19 +51,6 @@ public class UserService {
         return roles.stream().map(it -> new ValueTextDto(String.valueOf(it.getId()), it.getName())).collect(Collectors.toList());
     }
 
-    public boolean hasPermission(PermissionEnum permission, Long userId) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            Collection<? extends GrantedAuthority> permissions = user.getAuthorities();
-            for (GrantedAuthority it : permissions) {
-                if (permission.name().equals(it.getAuthority())) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 
     public UserDto getUser(Long userId) throws InvalidRequestException {
         Optional<User> userOpt = userRepository.findById(userId);
@@ -93,6 +76,7 @@ public class UserService {
         if (user.getRoleId() != null) {
             Optional<Role> roleOpt = roleRepository.findById(user.getRoleId());
             roleOpt.ifPresent(role -> {
+                mapped.setRoleId(role.getId());
                 mapped.setRoleName(role.getName());
             });
         }
@@ -156,10 +140,12 @@ public class UserService {
         user.setIsAccountNonLocked(true);
         user.setIsCredentialsNonExpired(true);
         user.setIsEnabled(true);
-        user.setUsername(request.getUsername());
+        user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setPhoneNumber(request.getPhoneNo());
         user.setBirthDate(request.getBirthDate());
+        user.setAddress(request.getAddress());
+        user.setGender(request.getGender());
         user.setCreatedDate(ZonedDateTime.now());
         user.setUpdatedDate(ZonedDateTime.now());
         user.setUpdatedBy(createdBy);
@@ -184,10 +170,12 @@ public class UserService {
             String filepath = fileUtils.storeFile(pictureFile, pictureBasePath);
             user.setPicture(filepath);
         }
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
+        user.setName(request.getName());
         user.setPhoneNumber(request.getPhoneNo());
         user.setBirthDate(request.getBirthDate());
+        user.setAddress(request.getAddress());
+        user.setRoleId(request.getRoleId());
+        user.setGender(request.getGender());
         user.setUpdatedDate(ZonedDateTime.now());
         user.setUpdatedBy(updatedBy);
 

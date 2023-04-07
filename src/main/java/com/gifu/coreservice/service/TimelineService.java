@@ -53,13 +53,13 @@ public class TimelineService {
     @Autowired
     private TimelineStepStatusRepository timelineStepStatusRepository;
     @Autowired
-    private UserService userService;
-    @Autowired
     private UserRepository userRepository;
     @Autowired
     private OrderService orderService;
     @Autowired
     private HistoricalOrderStatusService historicalOrderStatusService;
+    @Autowired
+    private UserPermissionService userPermissionService;
 
     private static final String SYSTEM = "SYSTEM";
 
@@ -133,7 +133,7 @@ public class TimelineService {
 
     @Transactional
     public void handleChangeStepStatus(UpdateStepStatusRequest request, User requester) throws InvalidRequestException {
-        boolean isApprover = userService.hasPermission(PermissionEnum.APPROVE_STEP_STATUS, requester.getId());
+        boolean isApprover = userPermissionService.hasPermission(PermissionEnum.APPROVE_STEP_STATUS, requester.getId());
         Optional<Timeline> timelineOpt = timelineRepository.findById(request.getTimelineId());
         if (timelineOpt.isEmpty()) {
             throw new InvalidRequestException("Timeline (id=" + request.getTimelineId() + ") is not found");
@@ -246,7 +246,7 @@ public class TimelineService {
     //if current step status is the last one, only show current step status
     public List<StepTodoDto> findStepTodoByUserId(Long userId) {
         List<Timeline> activeTimelines = timelineRepository.findAllActiveTimeline();
-        boolean isApprover = userService.hasPermission(PermissionEnum.APPROVE_STEP_STATUS, userId);
+        boolean isApprover = userPermissionService.hasPermission(PermissionEnum.APPROVE_STEP_STATUS, userId);
         List<StepTodoDto> stepTodoList = new ArrayList<>();
         for (Timeline timeline : activeTimelines) {
             TimelineStep currentStep = getCurrentTimelineStep(timeline.getId());

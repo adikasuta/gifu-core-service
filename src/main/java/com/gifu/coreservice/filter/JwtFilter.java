@@ -3,6 +3,8 @@ package com.gifu.coreservice.filter;
 import com.gifu.coreservice.entity.User;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.repository.UserRepository;
+import com.gifu.coreservice.service.UserPermissionService;
+import com.gifu.coreservice.service.UserService;
 import com.gifu.coreservice.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -37,6 +39,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
     private UserRepository userRepo;
+    @Autowired
+    private UserPermissionService userPermissionService;
 
     private final Collection<String> excludeUrlPatterns = new ArrayList<>();
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
@@ -82,7 +86,7 @@ public class JwtFilter extends OncePerRequestFilter {
             UsernamePasswordAuthenticationToken
                     authentication = new UsernamePasswordAuthenticationToken(
                     userDetails, null,
-                    userDetails.getAuthorities()
+                    userPermissionService.getPermissionsByUserId(userDetails.getId())
             );
 
             authentication.setDetails(

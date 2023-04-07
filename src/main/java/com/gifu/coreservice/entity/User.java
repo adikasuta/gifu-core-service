@@ -9,7 +9,6 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -31,14 +30,14 @@ public class User implements UserDetails {
     private Long roleId;
     @Column(name = "created_date")
     private ZonedDateTime createdDate;
-    @Column(name="updated_by")
+    @Column(name = "updated_by")
     private String updatedBy;
     @Column(name = "updated_date")
     private ZonedDateTime updatedDate;
 
-    @Column(name="username")
+    @Column(name = "username")
     private String username;
-    @Column(name="phone_number")
+    @Column(name = "phone_number")
     private String phoneNumber;
     @Column(name = "address")
     private String address;
@@ -46,7 +45,7 @@ public class User implements UserDetails {
     private Integer gender;
     @Column(name = "birth_date")
     private LocalDate birthDate;
-    @Column(name= "picture")
+    @Column(name = "picture")
     private String picture;
 
     @Column(name = "is_account_non_expired")

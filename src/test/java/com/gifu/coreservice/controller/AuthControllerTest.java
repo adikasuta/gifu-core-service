@@ -7,6 +7,8 @@ import com.gifu.coreservice.model.response.LoginResponse;
 import com.gifu.coreservice.repository.UserRepository;
 import com.gifu.coreservice.service.AuthService;
 import com.gifu.coreservice.service.ObjectMapperService;
+import com.gifu.coreservice.service.UserPermissionService;
+import com.gifu.coreservice.service.UserService;
 import com.gifu.coreservice.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -63,6 +65,8 @@ class AuthControllerTest {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private ObjectMapperService objectMapperService;
+    @Autowired
+    private UserPermissionService userPermissionService;
 
     @BeforeEach
     public void setUp(){
@@ -99,7 +103,7 @@ class AuthControllerTest {
     @Test
     public void shouldAbleToChangePassword() throws Exception {
         User user = userRepository.findByEmail("some@email.com").get();
-        String jwt = JwtUtils.createJwtSignedHMAC(user);
+        String jwt = JwtUtils.createJwtSignedHMAC(user, userPermissionService);
         MvcResult result = mockMvc.perform(
                         post("/auth/api/change-password")
                                 .contentType(MediaType.APPLICATION_JSON_VALUE)
