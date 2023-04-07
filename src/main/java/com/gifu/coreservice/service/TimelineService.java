@@ -66,16 +66,19 @@ public class TimelineService {
     public ProgressTrackerDto trackOrder(String orderCode, String phoneNumber) throws InvalidRequestException {
         Optional<Order> orderOpt = orderRepository.findByOrderCode(orderCode);
         if (orderOpt.isEmpty()) {
-            throw new InvalidRequestException("Order code="+orderCode+" is not valid");
+            throw new InvalidRequestException("Order code=" + orderCode + " is not valid");
         }
         Order order = orderOpt.get();
-        if(!phoneNumber.equals(order.getCustomerPhoneNo())){
-            throw new InvalidRequestException("Order code="+orderCode+" is not valid");
+        if (!phoneNumber.equals(order.getCustomerPhoneNo())) {
+            throw new InvalidRequestException("Phone number=" + phoneNumber + " is not valid");
         }
         List<TimelineTrackerDto> steps = new ArrayList<>();
         Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("id").ascending());
 
-        List<HistoricalOrderStatus> historicalStatus = historicalOrderStatusService.findByOrderId(order.getId(), pageable);
+        List<HistoricalOrderStatus> historicalStatus = historicalOrderStatusService.findByOrderIdAndStatusIn(
+                order.getId(),
+                List.of(OrderStatus.WAITING_FOR_CONFIRMATION.name(), OrderStatus.IN_PROGRESS_PRODUCTION.name()),
+                pageable);
         for (HistoricalOrderStatus it : historicalStatus) {
             steps.add(TimelineTrackerDto.builder()
                     .stepName("Preparation")
@@ -102,6 +105,9 @@ public class TimelineService {
         }
 
         return ProgressTrackerDto.builder()
+                .productName(order.getProductName())
+                .quantity(order.getQuantity())
+                .orderCode(orderCode)
                 .lastOrderStatus(order.getStatus())
                 .timeline(steps)
                 .build();
@@ -170,7 +176,7 @@ public class TimelineService {
         Status newStatus = newStatusOpt.get();
         TimelineStepStatus newTimelineStepStatus = new TimelineStepStatus();
         newTimelineStepStatus.setStatusId(request.getNewStatusId());
-        newTimelineStepStatus.setTimelineStepId(currentStep.getStepId());
+        newTimelineStepStatus.setTimelineStepId(currentStep.getId());
         newTimelineStepStatus.setCreatedDate(ZonedDateTime.now());
         newTimelineStepStatus.setStatusName(newStatus.getName());
         newTimelineStepStatus.setCreatedBy(requester.getEmail());
@@ -198,6 +204,7 @@ public class TimelineService {
         timelineStepStatus.setTimelineStepId(timelineStep.getId());
         timelineStepStatus.setCreatedBy(createdBy);
         timelineStepStatus.setCreatedDate(ZonedDateTime.now());
+        timelineStepStatus.setStatusName(firstStatus.getName());
         timelineStepStatusRepository.save(timelineStepStatus);
     }
 
@@ -255,7 +262,6 @@ public class TimelineService {
                 continue;
             }
             Status status = statusOpt.get();
-            boolean isToBeApproveStep = PermissionEnum.APPROVE_STEP_STATUS.name().equals(status.getPermissionCode()) && isApprover;
             StepTodoDto stepToDo = StepTodoDto.builder()
                     .id(currentStep.getStepId())
                     .timelineId(timeline.getId())
@@ -265,11 +271,15 @@ public class TimelineService {
                     .currentStatusName(currentStatus.getStatusName())
                     .build();
             List<Status> statuses = new ArrayList<>();
-            if (currentStep.getAssigneeUserId().equals(userId) || isToBeApproveStep) {
-                statuses.addAll(getModifiableStatus(status, currentStep));
-            } else {
-                statuses.add(status);
+            statuses.add(status);
+            if (PermissionEnum.APPROVE_STEP_STATUS.name().equals(status.getPermissionCode())) {
+                if(isApprover){
+                    statuses = new ArrayList<>(getModifiableStatus(status, currentStep));
+                }
+            } else if (currentStep.getAssigneeUserId().equals(userId)) {
+                statuses = new ArrayList<>(getModifiableStatus(status, currentStep));
             }
+
             Optional<User> userOpt = userRepository.findById(currentStep.getAssigneeUserId());
             userOpt.ifPresent(user -> stepToDo.setAssigneeName(user.getName()));
             stepToDo.setStatuses(statuses);

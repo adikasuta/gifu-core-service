@@ -22,8 +22,8 @@ public class HistoricalOrderStatusService {
     @Autowired
     private OrderRepository orderRepository;
 
-    public List<HistoricalOrderStatus> findByOrderId(Long orderId, Pageable pageable) {
-        return historicalOrderStatusRepository.findByOrderId(orderId, pageable);
+    public List<HistoricalOrderStatus> findByOrderIdAndStatusIn(Long orderId, List<String> statuses, Pageable pageable) {
+        return historicalOrderStatusRepository.findByOrderIdAndStatusIn(orderId, statuses, pageable);
     }
 
     public HistoricalOrderStatus changeStatus(ChangeStatusRequest request) throws InvalidRequestException {

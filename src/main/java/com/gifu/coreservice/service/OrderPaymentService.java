@@ -194,6 +194,7 @@ public class OrderPaymentService {
                 List<XenditClosedVa> virtualAccounts = xenditService.findByBillId(bill.getId());
                 List<PaymentInstructionVADto> vaDto = virtualAccounts.stream().map(it -> PaymentInstructionVADto.builder()
                         .accountName(it.getName())
+                        .prefix(it.getMerchantCode())
                         .bankCode(it.getBankCode())
                         .fullVaNumber(it.getFullVaNumber())
                         .build()).collect(Collectors.toList());

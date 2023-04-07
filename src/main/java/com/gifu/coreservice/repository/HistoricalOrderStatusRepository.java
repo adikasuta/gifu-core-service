@@ -10,5 +10,5 @@ import java.util.List;
 @Repository
 public interface HistoricalOrderStatusRepository extends JpaRepository<HistoricalOrderStatus, Long> {
 
-    List<HistoricalOrderStatus> findByOrderId(Long orderId, Pageable pageable);
+    List<HistoricalOrderStatus> findByOrderIdAndStatusIn(Long orderId, List<String> statusList, Pageable pageable);
 }

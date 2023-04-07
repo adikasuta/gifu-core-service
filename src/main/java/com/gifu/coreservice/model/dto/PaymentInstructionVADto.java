@@ -7,6 +7,7 @@ import lombok.Data;
 @Data
 public class PaymentInstructionVADto {
     private String bankCode;
+    private String prefix;
     private String fullVaNumber;
     private String accountName;
 }

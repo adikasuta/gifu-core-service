@@ -32,13 +32,16 @@ public class PublicTimelineController {
         try {
             List<ProgressTrackerDto> res = new ArrayList<>();
             for (String orderCode : orderCodes) {
-                res.add(timelineService.trackOrder(orderCode, phoneNumber));
+                try{
+                    res.add(timelineService.trackOrder(orderCode, phoneNumber));
+                }catch (InvalidRequestException e){
+                    res.add(ProgressTrackerDto.builder()
+                                    .orderCode(orderCode)
+                                    .remarks(e.getMessage())
+                            .build());
+                }
             }
             return ResponseEntity.ok(new SingleResourceResponse<>(res));
-        } catch (InvalidRequestException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    new SingleResourceResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value())
-            );
         } catch (Exception ex) {
             log.error("ERROR ORDER TRACKER: " + ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
