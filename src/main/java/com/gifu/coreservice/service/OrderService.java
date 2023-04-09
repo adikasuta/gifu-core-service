@@ -153,6 +153,11 @@ public class OrderService {
         );
         spec = spec.and(notDraft);
 
+        BasicSpec<Order> notCart = new BasicSpec<>(
+                new SearchCriteria("status", SearchOperation.NOT_EQUALS, OrderStatus.IN_CART.name())
+        );
+        spec = spec.and(notCart);
+
         Page<Order> orders = orderRepository.findAll(spec, pageable);
         return orders.map(it -> {
             Optional<OrderShipping> orderShippingOpt = orderShippingRepository.findById(it.getOrderShippingId());
