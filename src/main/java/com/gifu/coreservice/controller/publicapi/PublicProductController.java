@@ -70,6 +70,7 @@ public class PublicProductController {
                     .productType(productType)
                     .productCategoryId(productCategoryId)
                     .pricingRangeFilter(pricingRangeFilter)
+                    .available(true)
                     .build();
             Page<ProductSearchDto> result = productService.searchProductThenMap(request, pageable);
             return ResponseEntity.ok(new SingleResourceResponse<>(result));

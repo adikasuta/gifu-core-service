@@ -1,10 +1,12 @@
 package com.gifu.coreservice.controller;
 
 import com.gifu.coreservice.entity.User;
+import com.gifu.coreservice.enumeration.PricingRangeFilter;
 import com.gifu.coreservice.exception.InvalidRequestException;
 import com.gifu.coreservice.model.dto.ProductSearchDto;
 import com.gifu.coreservice.model.request.SaveProductRequest;
 import com.gifu.coreservice.model.request.SearchProductRequest;
+import com.gifu.coreservice.model.request.UpdateProductStatusRequest;
 import com.gifu.coreservice.model.response.SingleResourceResponse;
 import com.gifu.coreservice.service.ObjectMapperService;
 import com.gifu.coreservice.service.ProductService;
@@ -46,6 +48,52 @@ public class ProductController {
             );
         } catch (Exception ex) {
             log.error("ERROR SAVE PRODUCT, message="+ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<SingleResourceResponse<Page<ProductSearchDto>>> getSearchProduct(
+            @RequestParam(required = false) String searchQuery,
+            @RequestParam(required = false) Long productCategoryId,
+            @RequestParam(required = false) String productType,
+            @RequestParam(required = false) PricingRangeFilter pricingRangeFilter,
+            Pageable pageable
+    ) {
+        try {
+            SearchProductRequest request = SearchProductRequest.builder()
+                    .searchQuery(searchQuery)
+                    .productType(productType)
+                    .productCategoryId(productCategoryId)
+                    .pricingRangeFilter(pricingRangeFilter)
+                    .build();
+            Page<ProductSearchDto> result = productService.searchProductThenMap(request, pageable);
+            return ResponseEntity.ok(new SingleResourceResponse<>(result));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+            );
+        }
+    }
+
+    @PatchMapping("{id}/status")
+    public ResponseEntity<SingleResourceResponse<String>> patchProductStatus(
+            @PathVariable Long id,
+            @RequestBody UpdateProductStatusRequest request
+            ) {
+        try {
+            User user = SessionUtils.getUserContext();
+            productService.updateStatus(id, request, user.getEmail());
+            return ResponseEntity.ok(new SingleResourceResponse<>("Success update product"));
+        } catch (InvalidRequestException ex) {
+            log.error("ERROR update PRODUCT status, message="+ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    new SingleResourceResponse<>(ex.getMessage(), HttpStatus.BAD_REQUEST.value())
+            );
+        } catch (Exception ex) {
+            log.error("ERROR update PRODUCT status, message="+ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     new SingleResourceResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), HttpStatus.INTERNAL_SERVER_ERROR.value())
             );

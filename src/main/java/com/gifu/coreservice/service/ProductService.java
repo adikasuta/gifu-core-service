@@ -11,6 +11,7 @@ import com.gifu.coreservice.model.dto.dashboard.product.ProductOrderDto;
 import com.gifu.coreservice.model.dto.dashboard.product.ProductVariantViewDto;
 import com.gifu.coreservice.model.request.SaveProductRequest;
 import com.gifu.coreservice.model.request.SearchProductRequest;
+import com.gifu.coreservice.model.request.UpdateProductStatusRequest;
 import com.gifu.coreservice.repository.*;
 import com.gifu.coreservice.repository.spec.BasicSpec;
 import com.gifu.coreservice.repository.spec.SearchCriteria;
@@ -101,6 +102,18 @@ public class ProductService {
                 .build();
     }
 
+    @Transactional
+    public void updateStatus(Long productId, UpdateProductStatusRequest request, String updatedBy) throws InvalidRequestException {
+        Optional<Product> productOpt = productRepository.findById(productId);
+        if(productOpt.isEmpty()){
+            throw new InvalidRequestException("Product is not existed");
+        }
+        Product product = productOpt.get();
+        product.setIsNotAvailable(!request.isAvailable());
+        product.setUpdatedDate(ZonedDateTime.now());
+        product.setUpdatedBy(updatedBy);
+        productRepository.save(product);
+    }
     @Transactional
     public Product saveProduct(SaveProductRequest request, MultipartFile pictureFile, String updatedBy) throws InvalidRequestException, IOException {
         Product product = new Product();
@@ -264,6 +277,13 @@ public class ProductService {
             ));
             specAnd = specAnd.and(productIdsIn);
         }
+        if(request.getAvailable()!=null && request.getAvailable()){
+            BasicSpec<Product> availability = new BasicSpec<>(new SearchCriteria(
+                    "isNotAvailable", SearchOperation.EQUALS, Boolean.FALSE
+            ));
+            specAnd = specAnd.and(availability);
+        }
+
 
         return productRepository.findAll(
                 Specification.where(specAnd).and(specOr).and(new SpecUtils<Product>().isNotTrue("isDeleted")),
@@ -282,6 +302,7 @@ public class ProductService {
                     .name(it.getName())
                     .picture(it.getPicture())
                     .displayPricing(getDisplayPrice(it.getId()))
+                    .available(!it.getIsNotAvailable())
                     .pricingRanges(pricingRangeRepository.findByProductId(it.getId()))
                     .size(size)
                     .build();

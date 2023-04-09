@@ -14,6 +14,7 @@ public class ProductSearchDto {
     private String name;
     private String picture;
     private String size;
+    private Boolean available;
     private PricingRange displayPricing;
     private List<PricingRange> pricingRanges;
 }

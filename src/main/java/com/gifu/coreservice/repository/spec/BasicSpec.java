@@ -32,6 +32,11 @@ public class BasicSpec<T> implements Specification<T> {
                     return builder.equal(
                             root.get(criteria.getKey()), val);
                 }
+                if (root.get(criteria.getKey()).getJavaType() == Boolean.class) {
+                    Boolean val = (Boolean) (criteria.getValue());
+                    return builder.equal(
+                            root.get(criteria.getKey()), val);
+                }
                 return builder.equal(
                         root.get(criteria.getKey()), criteria.getValue());
             case LIKE:

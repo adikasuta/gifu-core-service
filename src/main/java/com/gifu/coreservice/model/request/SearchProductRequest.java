@@ -11,4 +11,5 @@ public class SearchProductRequest {
     private Long productCategoryId;
     private String productType;
     private PricingRangeFilter pricingRangeFilter;
+    private Boolean available;
 }
